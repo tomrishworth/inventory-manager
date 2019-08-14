@@ -1,9 +1,8 @@
 <template>
   <div class="home container">
-    <h1>Inventory - {{ currentUser }}</h1>
-    <User :id="currentUser"></User>
+    <h1>Inventory</h1>
     <div class="mb-4">
-      <Item class="mb-2" v-for="item in inventory" :key="item.id" :item="item"></Item>
+      <Item class="mb-2" v-for="item in indexedInventory" :key="item.id" :item="item"></Item>
     </div>
     <h2 class="h5">Add another</h2>
     <b-card bg-variant="light">
@@ -84,6 +83,12 @@ export default {
       } else {
         return null;
       }
+    },
+    indexedInventory() {
+      return this.inventory.reduce((indexedItems, item) => {
+        indexedItems[item.id] = item;
+        return indexedItems;
+      }, {});
     }
   },
   created() {
@@ -92,17 +97,17 @@ export default {
         db.collection("users")
           .doc(user.uid)
           .collection("inventory")
-          .onSnapshot(querySnapshot => {
-            const documents = querySnapshot.docs.map(doc => doc.data());
-            this.inventory = documents;
+          .onSnapshot(snapshot => {
+            const inventory = [];
+            snapshot.forEach(doc => {
+              const item = doc.data();
+              item.id = doc.id;
+              inventory.push(item);
+            });
+            this.inventory = inventory;
           });
       }
     });
-  },
-  watch: {
-    userID: () => {
-      console.log("userId updated");
-    }
   }
 };
 </script>

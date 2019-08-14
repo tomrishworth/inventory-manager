@@ -34,22 +34,26 @@ export default {
   },
   methods: {
     handleRemove() {
-      console.log(this.item.id);
+      const name = this.item.name;
       db.collection("users")
         .doc(this.$store.state.currentUser.uid)
         .collection("inventory")
         .doc(this.item.id)
-        .delete();
-      // db.collection("items")
-      //   .doc(this.item.id)
-      //   .delete();
+        .delete()
+        .then(() => {
+          this.$bvToast.toast(`${name} deleted`);
+        });
     },
     handleEdit() {
-      db.collection("items")
+      const name = this.item.name;
+
+      db.collection("users")
+        .doc(this.$store.state.currentUser.uid)
+        .collection("inventory")
         .doc(this.item.id)
         .set(this.item)
         .then(() => {
-          console.log("Item updated!");
+          this.$bvToast.toast(`${name} updated`);
         });
     }
   },

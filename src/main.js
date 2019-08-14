@@ -17,7 +17,15 @@ import { firestorePlugin } from 'vuefire';
 import BootstrapVue from 'bootstrap-vue';
 
 Vue.use(firestorePlugin);
-Vue.use(BootstrapVue);
+Vue.use(BootstrapVue, {
+  BToast: {
+    autoHideDelay: 3000,
+    solid: true,
+    variant: 'dark',
+    toaster: 'b-toaster-bottom-center',
+    toastClass: 'snack'
+  }
+});
 
 Vue.config.productionTip = false;
 

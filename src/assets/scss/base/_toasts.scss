@@ -1,0 +1,28 @@
+.toast.snack {
+  background-color: red;
+  .toast-header {
+    padding: 0;
+    border: none;
+  }
+  .toast-body {
+    font-size: $text-md;
+    padding-right: $spacer-6;
+  }
+  .close {
+    position: absolute;
+    right: 18px;
+    top: 14px;
+  }
+}
+
+.b-toast-dark.b-toast-solid {
+  .toast {
+    background-color: #000;
+    color: #fff;
+  }
+  .close {
+    color: #fff;
+    opacity: 1;
+    text-shadow: none;
+  }
+}
