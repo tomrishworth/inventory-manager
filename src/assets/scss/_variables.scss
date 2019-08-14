@@ -1,0 +1,101 @@
+// Buttons
+$btn-font-weight: 500;
+$btn-padding-x: 1.5rem;
+
+// Spacers
+$spacer: 1rem;
+$spacers: ();
+$spacers: map-merge(
+  (
+    0: 0,
+    1: (
+      $spacer * 0.25
+    ),
+    2: (
+      $spacer * 0.5
+    ),
+    3: (
+      $spacer * 0.75
+    ),
+    4: $spacer,
+    5: (
+      $spacer * 1.5
+    ),
+    6: (
+      $spacer * 2
+    ),
+    7: (
+      $spacer * 3
+    ),
+    8: (
+      $spacer * 4
+    ),
+    9: (
+      $spacer * 6
+    ),
+    10: (
+      $spacer * 8
+    ),
+    11: (
+      $spacer * 12
+    ),
+    12: (
+      $spacer * 16
+    ),
+    13: (
+      $spacer * 24
+    ),
+    14: (
+      $spacer * 32
+    ),
+    15: (
+      $spacer * 40
+    ),
+    16: (
+      $spacer * 48
+    )
+  ),
+  $spacers
+);
+
+$spacer-1: map-get($spacers, 1);
+$spacer-2: map-get($spacers, 2);
+$spacer-3: map-get($spacers, 3);
+$spacer-4: map-get($spacers, 4);
+$spacer-5: map-get($spacers, 5);
+$spacer-6: map-get($spacers, 6);
+$spacer-7: map-get($spacers, 7);
+$spacer-8: map-get($spacers, 8);
+$spacer-9: map-get($spacers, 9);
+$spacer-10: map-get($spacers, 10);
+$spacer-11: map-get($spacers, 11);
+$spacer-12: map-get($spacers, 12);
+$spacer-13: map-get($spacers, 13);
+$spacer-14: map-get($spacers, 14);
+$spacer-15: map-get($spacers, 15);
+$spacer-16: map-get($spacers, 16);
+
+// Typography
+$text-xxs: 0.6875rem; // 11px
+$text-xs: 0.75rem; // 12px
+$text-sm: 0.875rem; // 14px
+$text-base: 1rem; // 16px
+$text-md: 1.125rem; // 18px
+$text-lg: 1.25rem; // 20px
+$text-xl: 1.5rem; // 24px
+$text-2xl: 1.875rem; // 30px
+$text-3xl: 2.25rem; // 36px
+$text-4xl: 3rem; // 48px
+$text-5xl: 3.75rem; // 60px
+$text-6xl: 4.5rem; // 72px
+
+$font-size-base: $text-base;
+$font-size-lg: $text-md;
+$font-size-sm: $text-sm;
+
+$h1-font-size: $text-3xl;
+$h2-font-size: $text-2xl;
+$h3-font-size: $text-xl;
+$h4-font-size: $text-lg;
+$h5-font-size: $text-lg;
+$h6-font-size: $text-lg;

@@ -1,0 +1,178 @@
+// Containers
+
+.container-sm {
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.container-md {
+  max-width: 750px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.container-lg {
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+// Font sizes
+
+.text-xxs {
+  font-size: $text-xxs;
+}
+
+.text-xs {
+  font-size: $text-xs;
+}
+
+.text-sm {
+  font-size: $text-sm;
+}
+
+.text-base {
+  font-size: $text-base;
+}
+
+.text-md {
+  font-size: $text-md;
+}
+
+.text-lg {
+  font-size: $text-lg;
+}
+
+.text-xl {
+  font-size: $text-xl;
+}
+
+.text-2xl {
+  font-size: $text-2xl;
+}
+
+// Line Height
+.line-height-none {
+  line-height: 1;
+}
+
+.line-height-tight {
+  line-height: 1.25;
+}
+
+.line-height-normal {
+  line-height: 1.5;
+}
+
+.line-height-loose {
+  line-height: 2;
+}
+
+// Font Weight
+.font-weight-light {
+  font-weight: 300;
+}
+
+.font-weight-semibold {
+  font-weight: 500;
+}
+
+.text-uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.shadow {
+  box-shadow: $box-shadow;
+}
+
+// Layout helpers
+
+.pull-up-1 {
+  position: relative;
+  top: -1px;
+}
+
+.pull-up-2 {
+  position: relative;
+  top: -2px;
+}
+
+.pull-up-3 {
+  position: relative;
+  top: -3px;
+}
+
+.pull-up-4 {
+  position: relative;
+  top: -4px;
+}
+
+.pull-up-5 {
+  position: relative;
+  top: -5px;
+}
+
+.pull-down-1 {
+  position: relative;
+  top: 1px;
+}
+
+.pull-down-2 {
+  position: relative;
+  top: 2px;
+}
+
+.pull-down-3 {
+  position: relative;
+  top: 3px;
+}
+
+.pull-down-4 {
+  position: relative;
+  top: 4px;
+}
+
+.pull-left-1 {
+  position: relative;
+  right: 1px;
+}
+
+.pull-left-2 {
+  position: relative;
+  right: 2px;
+}
+
+.pull-left-3 {
+  position: relative;
+  right: 3px;
+}
+
+.pull-right-1 {
+  position: relative;
+  left: 1px;
+}
+
+.pull-right-2 {
+  position: relative;
+  left: 2px;
+}
+
+.pull-right-3 {
+  position: relative;
+  left: 3px;
+}
+
+// Widths helpers
+$widths: 25, 50, 55, 75, 100, 110, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500;
+
+@each $width in $widths {
+  .w-#{$width}px {
+    width: #{$width}px !important;
+  }
+
+  .mw-#{$width}px {
+    min-width: #{$width}px !important;
+  }
+}

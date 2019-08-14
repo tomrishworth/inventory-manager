@@ -1,0 +1,18 @@
+@import 'variables';
+
+// Vendor
+@import '~bootstrap/scss/bootstrap';
+@import '~bootstrap-vue/dist/bootstrap-vue.css';
+
+// Base
+@import 'base/buttons';
+@import 'base/dropdown';
+
+@import 'utilities';
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: $light;
+}

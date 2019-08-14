@@ -1,0 +1,37 @@
+.b-dropdown {
+  .dropdown-toggle {
+    border-radius: $border-radius !important;
+    svg {
+      font-size: $text-lg;
+      color: $text-muted;
+    }
+  }
+  .dropdown-item {
+    font-size: $text-sm;
+    font-weight: 500;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    svg {
+      color: $text-muted;
+      margin-right: $spacer-1;
+      font-size: $text-base;
+      width: 1.5rem;
+    }
+    &:focus {
+      background-color: transparent;
+      color: $body-color;
+    }
+    &:active {
+      color: $link-color;
+    }
+  }
+}
+
+.dropdown-ellipsis {
+  .btn {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+}
