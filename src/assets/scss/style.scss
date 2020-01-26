@@ -3,11 +3,14 @@
 // Vendor
 @import '~bootstrap/scss/bootstrap';
 @import '~bootstrap-vue/dist/bootstrap-vue.css';
+@import '~vue-multiselect/dist/vue-multiselect.min.css';
 
 // Base
 @import 'base/buttons';
 @import 'base/dropdown';
+@import 'base/modals';
 @import 'base/toasts';
+@import 'base/type';
 
 @import 'utilities';
 
@@ -16,4 +19,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   background-color: $light;
+}
+
+#app.has-sidebar {
+  margin-left: 240px;
 }

@@ -1,26 +1,133 @@
 <template>
-  <div class="home container">
-    <h1>Inventory</h1>
-    <div class="mb-4">
-      <Item class="mb-2" v-for="item in indexedInventory" :key="item.id" :item="item"></Item>
+  <div class="container">
+    <div class="d-flex my-4">
+      <h1 class="page-title mb-0">Inventory</h1>
+      <div class="ml-4">
+        <b-btn size="sm" variant="primary" v-b-modal.addInventory>
+          <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
+        </b-btn>
+      </div>
     </div>
-    <h2 class="h5">Add another</h2>
-    <b-card bg-variant="light">
-      <b-form class="d-flex align-items-end" @submit.prevent="addItem">
-        <b-form-group class="mb-0 mr-2" label="Name" label-for="name">
-          <b-form-input v-model="name" id="name"></b-form-input>
+    <div class="mb-4 w-75">
+      <b-table class="bg-white" :items="inventory" :fields="fields">
+        <template v-slot:cell(test)="data">
+          <div class="d-flex align-items-baseline">
+            <div class="mr-3">{{ data.item.value }} {{ data.item.unit }}</div>
+            <adjust-quantity :item="data.item"></adjust-quantity>
+          </div>
+        </template>
+        <template v-slot:cell(costInfo)="data">
+          <div v-if="data.item.cost">
+            <div>${{ data.item.cost }} per {{ data.item.costAmount }} {{ data.item.costUnit }}</div>
+            <div
+              class="text-sm text-muted"
+            >{{ unitCost(data.item.cost, data.item.costAmount) }} per {{ data.item.costUnit }}</div>
+          </div>
+        </template>
+        <template v-slot:cell(actions)="data">
+          <b-dropdown variant="link" right class="dropdown-ellipsis" no-caret aria-label="actions">
+            <template slot="button-content">
+              <font-awesome-icon :icon="['far', 'ellipsis-v']"></font-awesome-icon>
+            </template>
+            <b-dropdown-item @click="viewInventory(data.item)">
+              <font-awesome-icon :icon="['far', 'pen']"></font-awesome-icon>Edit
+            </b-dropdown-item>
+            <b-dropdown-item @click="handleDelete(data.item)">
+              <font-awesome-icon :icon="['far', 'trash-alt']"></font-awesome-icon>Delete
+            </b-dropdown-item>
+          </b-dropdown>
+        </template>
+      </b-table>
+    </div>
+    <b-modal
+      id="addInventory"
+      title="Add Inventory Item"
+      @ok="addItem"
+      ok-title="Add"
+      @shown="focusInput"
+    >
+      <b-form class>
+        <b-form-group class label="Name" label-for="name">
+          <b-form-input ref="name" v-model="name" placeholder="e.g. Oil" id="name"></b-form-input>
         </b-form-group>
-        <b-form-group class="mb-0 mr-2" label="Amount" label-for="amount">
-          <b-form-input type="number" step="0.01" v-model="value" id="amount"></b-form-input>
-        </b-form-group>
-        <b-form-group class="mb-0 mr-2" label="Type">
-          <b-form-select v-model="unit" :options="options"></b-form-select>
-        </b-form-group>
-        <div>
-          <b-btn type="submit" variant="primary">Add</b-btn>
+        <div class="d-flex">
+          <b-form-group class="mr-2" label="Amount in Inventory" label-for="amount">
+            <b-form-input type="number" step="0.01" v-model.number="value" id="amount"></b-form-input>
+          </b-form-group>
+          <b-form-group class label="Unit">
+            <b-form-select v-model="unit" :options="options"></b-form-select>
+          </b-form-group>
+        </div>
+        <hr />
+        <h3 class="text-md">Costing Info</h3>
+        <p class="text-muted">e.g. $20 per 3kgs</p>
+        <div class="d-flex align-items-center">
+          <b-form-group class="mr-2" label="Cost" label-for="cost" style="width:120px">
+            <b-form-input
+              type="number"
+              step="0.01"
+              placeholder="e.g. 20"
+              v-model.number="cost"
+              id="cost"
+            ></b-form-input>
+          </b-form-group>
+          <div class="mx-2 font-italic text-muted">Per</div>
+          <b-form-group class="mr-2" label="Amount" label-for="costAmount" style="width:120px">
+            <b-form-input
+              type="number"
+              step="0.01"
+              placeholder="3"
+              v-model.number="costAmount"
+              id="costAmount"
+            ></b-form-input>
+          </b-form-group>
+          <b-form-group label="Unit" style="width:120px">
+            <b-form-select v-model="costUnit" :options="options"></b-form-select>
+          </b-form-group>
         </div>
       </b-form>
-    </b-card>
+    </b-modal>
+    <b-modal ref="viewItemModal" id="viewItem" title="Edit Item" ok-title="Save" @ok="handleEdit">
+      <b-form v-if="currentItem" class>
+        <b-form-group class label="Name" label-for="name">
+          <b-form-input ref="name" v-model="currentItem.name" placeholder="e.g. Oil" id="name"></b-form-input>
+        </b-form-group>
+        <div class="d-flex">
+          <b-form-group class="mr-2" label="Amount" label-for="amount">
+            <b-form-input type="number" step="0.01" v-model.number="currentItem.value" id="amount"></b-form-input>
+          </b-form-group>
+          <b-form-group class label="Type">
+            <b-form-select v-model="currentItem.unit" :options="options"></b-form-select>
+          </b-form-group>
+        </div>
+        <h3 class="text-md">Costing Info</h3>
+        <p class="text-muted">e.g. $20 per 3kgs</p>
+        <div class="d-flex align-items-center">
+          <b-form-group class="mr-2" label="Cost" label-for="cost" style="width:120px">
+            <b-form-input
+              type="number"
+              step="0.01"
+              placeholder="e.g. 20"
+              v-model.number="currentItem.cost"
+              id="cost"
+            ></b-form-input>
+          </b-form-group>
+          <div class="mx-2 font-italic text-muted">Per</div>
+          <b-form-group class="mr-2" label="Amount" label-for="costAmount" style="width:120px">
+            <b-form-input
+              type="number"
+              step="0.01"
+              placeholder="3"
+              v-model.number="currentItem.costAmount"
+              id="costAmount"
+            ></b-form-input>
+          </b-form-group>
+          <b-form-group label="Unit" style="width:120px">
+            <b-form-select v-model="currentItem.costUnit" :options="options"></b-form-select>
+          </b-form-group>
+        </div>
+      </b-form>
+    </b-modal>
   </div>
 </template>
 
@@ -28,30 +135,51 @@
 import { db } from "@/db";
 import { auth } from "@/db";
 import * as firebase from "firebase/app";
-import Item from "@/components/Inventory/Item";
-import User from "@/components/User";
+import AdjustQuantity from "@/components/Inventory/AdjustQuantity";
+import { formatMoney } from "accounting";
+// import User from "@/components/User";
+// import Multiselect from "vue-multiselect";
 // import Qty from "js-quantities";
 // import { unit } from 'mathjs';
 // import math from "mathjs";
 
-const users = db.collection("users");
+// const users = db.collection("users");
 
 export default {
   name: "home",
   components: {
-    Item,
-    User
+    AdjustQuantity
   },
   data() {
     return {
+      value: null,
       userID: null,
       user: null,
+      currentItem: null,
       users: [],
       inventory: [],
       name: null,
-      value: null,
-      unit: null,
-      loading: false
+      unit: "kg",
+      cost: null,
+      costAmount: null,
+      costUnit: "kg",
+      fields: [
+        {
+          key: "name",
+          sortable: true
+        },
+        {
+          key: "test",
+          label: "Quantity"
+        },
+        {
+          key: "costInfo",
+          label: "Cost"
+        },
+        {
+          key: "actions"
+        }
+      ]
     };
   },
   methods: {
@@ -63,14 +191,84 @@ export default {
           name: this.name,
           value: this.value,
           unit: this.unit,
+          cost: this.cost,
+          costAmount: this.costAmount,
+          costUnit: this.costUnit,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
           this.clearForm();
         });
     },
+    focusInput() {
+      this.$refs.name.$el.focus();
+    },
     clearForm() {
       (this.name = null), (this.value = null), (this.unit = null);
+    },
+    viewInventory(value) {
+      this.currentItem = value;
+      this.$refs["viewItemModal"].show();
+    },
+    handleDelete(item) {
+      const name = item.name;
+      this.$bvModal
+        .msgBoxConfirm(`Are you sure you want to delete ${name}?`, {
+          title: "Please Confirm",
+          size: "sm",
+          okVariant: "danger",
+          okTitle: "Delete",
+          cancelTitle: "Cancel"
+        })
+        .then(value => {
+          if (value === true) {
+            this.deleteItem(item);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    },
+    deleteItem(item) {
+      this.$store.dispatch("inventoryItemLoadingStatus", {
+        id: item.id,
+        loading: true
+      });
+      const name = item.name;
+      db.collection("users")
+        .doc(this.$store.state.currentUser.uid)
+        .collection("inventory")
+        .doc(item.id)
+        .delete()
+        .then(() => {
+          this.$store.dispatch("inventoryItemLoadingStatus", {
+            id: item.id,
+            loading: false
+          });
+          this.$bvToast.toast(`${name} deleted`);
+        });
+    },
+    handleEdit() {
+      this.$store.dispatch("inventoryItemLoadingStatus", {
+        id: this.currentItem.id,
+        loading: true
+      });
+      // const name = this.currentItem.name;
+      db.collection("users")
+        .doc(this.$store.state.currentUser.uid)
+        .collection("inventory")
+        .doc(this.currentItem.id)
+        .set(this.currentItem)
+        .then(() => {
+          this.$store.dispatch("inventoryItemLoadingStatus", {
+            id: this.currentItem.id,
+            loading: false
+          });
+          // this.$bvToast.toast(`${name} updated`);
+        });
+    },
+    unitCost(cost, costAmount) {
+      return formatMoney(cost / costAmount);
     }
   },
   computed: {

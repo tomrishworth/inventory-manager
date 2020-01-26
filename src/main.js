@@ -7,14 +7,20 @@ import './registerServiceWorker';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-import { faEllipsisV as farEllipsisV } from '@fortawesome/pro-regular-svg-icons';
+import {
+  faEllipsisV as farEllipsisV,
+  faPlus as farPlus,
+  faPen as farPen,
+  faTrashAlt as farTrashAlt
+} from '@fortawesome/pro-regular-svg-icons';
 
-library.add(farEllipsisV);
+library.add(farEllipsisV, farPlus, farPen, farTrashAlt);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 import { firestorePlugin } from 'vuefire';
 import BootstrapVue from 'bootstrap-vue';
+import { formatMoney } from 'accounting';
 
 Vue.use(firestorePlugin);
 Vue.use(BootstrapVue, {
@@ -25,6 +31,10 @@ Vue.use(BootstrapVue, {
     toaster: 'b-toaster-bottom-center',
     toastClass: 'snack'
   }
+});
+
+Vue.filter('currency', function(value) {
+  return formatMoney(value);
 });
 
 Vue.config.productionTip = false;

@@ -1,0 +1,24 @@
+.modal-header {
+  padding-bottom: 0;
+  padding-top: $spacer-5;
+  border-bottom: none;
+  .modal-title {
+    font-size: $text-md;
+    font-weight: 700;
+  }
+}
+
+.modal-footer {
+  justify-content: center;
+  background-color: $light;
+  .btn-secondary {
+    background-color: transparent;
+    border: none;
+    color: $body-color;
+    text-decoration: underline;
+  }
+  .btn-link {
+    color: $body-color;
+    text-decoration: underline;
+  }
+}

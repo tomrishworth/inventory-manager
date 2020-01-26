@@ -1,6 +1,15 @@
+// Colors
+$dark: #162a41;
+$light: #f1f4f8;
+
+$body-color: $dark;
+
 // Buttons
 $btn-font-weight: 500;
 $btn-padding-x: 1.5rem;
+
+// Options
+$enable-shadows: true;
 
 // Spacers
 $spacer: 1rem;
@@ -99,3 +108,13 @@ $h3-font-size: $text-xl;
 $h4-font-size: $text-lg;
 $h5-font-size: $text-lg;
 $h6-font-size: $text-lg;
+
+// Modals
+
+$modal-inner-padding: 1rem 3rem;
+$modal-header-padding-x: 3rem;
+
+// Close
+
+$close-font-size: $font-size-base * 2;
+$close-font-weight: 300;

@@ -1,52 +1,19 @@
 <template>
   <div class="container">
-    <h1>Recipes</h1>
-    <b-card-group v-if="recipes" class="mb-4" deck>
-      <b-card style="max-width: 300px" no-body v-for="recipe in recipes" :key="recipe.id">
-        <b-card-header class="d-flex">
-          <div>{{ recipe.name }}</div>
-          <b-dropdown variant="link" right class="ml-auto dropdown-ellipsis" no-caret>
-            <template slot="button-content">
-              <font-awesome-icon :icon="['far', 'ellipsis-v']"></font-awesome-icon>
-            </template>
-            <b-dropdown-item @click="startEditingRecipe(recipe)">Edit</b-dropdown-item>
-            <b-dropdown-item @click="handleDelete(recipe.id)">Delete</b-dropdown-item>
-          </b-dropdown>
-        </b-card-header>
-        <b-list-group v-if="recipe.items" class="flex-grow-1" flush>
-          <b-list-group-item v-for="item in recipe.items" :key="item.id">
-            <div class="d-flex justify-content-between">
-              <div>{{ getItemById(item.ref).name}}</div>
-              <div
-                class="font-weight-bold"
-                :class="enoughInventory(item.value, getItemById(item.ref).value) ? 'text-success' : 'text-danger'"
-              >{{ item.value }} {{ item.unit }}</div>
-            </div>
-            <div class="d-flex text-muted text-sm">
-              <div>Amount in inventory</div>
-              <div class="ml-auto">{{ getItemById(item.ref).value}} {{ getItemById(item.ref).unit}}</div>
-            </div>
-          </b-list-group-item>
-        </b-list-group>
-        <b-btn variant="link" @click="startMakerecipe(recipe)">Make Recipe</b-btn>
-      </b-card>
-    </b-card-group>
-    <b-btn v-b-modal.addRecipe>Add a recipe</b-btn>
-    <b-modal
-      @ok="removeInventory"
-      v-model="showCreateModal"
-      size="sm"
-      id="makeRecipeModal"
-      title="Make Recipe"
-    >
-      <p>This will remove the following quantities from your inventory</p>
-      <div v-if="makeRecipe">
-        <div class="d-flex" v-for="item in makeRecipe.items" :key="item.id">
-          <div>{{ getItemById(item.ref).name}}</div>
-          <div class="ml-auto">{{item.value}} {{item.unit}}</div>
-        </div>
+    <div class="d-flex my-4">
+      <h1 class="page-title mb-0">Recipes</h1>
+      <div class="ml-4">
+        <b-btn size="sm" variant="primary" v-b-modal.addRecipe>
+          <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add recipe
+        </b-btn>
       </div>
-    </b-modal>
+    </div>
+    <div v-if="recipes" class="mb-4">
+      <div v-for="recipe in recipes" :key="recipe.id">
+        <router-link :to="{ name: 'recipe', params: { id: recipe.id } }">{{ recipe.name }}</router-link>
+      </div>
+    </div>
+
     <b-modal
       @ok="handleOk"
       @show="createRecipe"
@@ -59,13 +26,17 @@
         <b-form-group label="Name" label-sr-only label-for="name">
           <b-form-input placeholder="Recipe name" v-model="newRecipe.name" id="name"></b-form-input>
         </b-form-group>
+        <b-form-group label="Batch Size" label-sr-only label-for="size">
+          <b-form-input placeholder="Batch Size" v-model="newRecipe.size" id="size"></b-form-input>
+        </b-form-group>
+
         <div class="row" v-if="newRecipe.items.length">
           <div class="col-4"></div>
           <div class="col-3">Quantity</div>
           <div class="col-3">Type</div>
         </div>
         <div class="row mb-1" v-for="(item, index) in newRecipe.items" :key="item.id">
-          <div class="col-4">{{ getItemById(item.ref).name}}</div>
+          <div class="col-4">{{ getItemById(item.ref).name }}</div>
           <b-form-group class="col-3 mb-0" label="Amount" label-sr-only label-for="amount">
             <b-form-input
               placeholder="Amount"
@@ -75,26 +46,24 @@
               id="amount"
             ></b-form-input>
           </b-form-group>
-          <div class="col-3">{{item.unit}}</div>
-          <!-- <b-form-group class="col-3 mb-0" label-sr-only label="Type">
-            <b-form-select v-model="item.unit" :options="options"></b-form-select>
-          </b-form-group>-->
+          <div class="col-3">{{ item.unit }}</div>
           <div class="col-2">
             <b-btn @click="removeItem(index)" variant="outline-secondary">x</b-btn>
           </div>
         </div>
         <b-dropdown text="Add item">
-          <b-dropdown-item
-            @click="handleAdd(item.id)"
-            v-for="item in inventory"
-            :key="item.id"
-          >{{ item.name }}</b-dropdown-item>
+          <b-dropdown-item @click="handleAdd(item.id)" v-for="item in inventory" :key="item.id">
+            {{
+            item.name
+            }}
+          </b-dropdown-item>
         </b-dropdown>
         <div class="mt-3">
           <small class="text-muted">Only items in your inventory can be added</small>
         </div>
       </div>
     </b-modal>
+
     <b-modal
       @ok="saveEdit"
       @cancel="handleCancel"
@@ -114,7 +83,7 @@
           <div class="col-4">Type</div>
         </div>
         <div class="row mb-1" v-for="(item, index) in editRecipe.items" :key="item.id">
-          <div class="col-4">{{ getItemById(item.ref).name}}</div>
+          <div class="col-4">{{ getItemById(item.ref).name }}</div>
           <b-form-group class="col-3 mb-0" label="Amount" label-sr-only label-for="amount">
             <b-form-input
               placeholder="Amount"
@@ -132,11 +101,11 @@
           </div>
         </div>
         <b-dropdown text="Add item">
-          <b-dropdown-item
-            @click="handleEditAdd(item.id)"
-            v-for="item in inventory"
-            :key="item.id"
-          >{{ item.name }}</b-dropdown-item>
+          <b-dropdown-item @click="handleEditAdd(item.id)" v-for="item in inventory" :key="item.id">
+            {{
+            item.name
+            }}
+          </b-dropdown-item>
         </b-dropdown>
         <div class="mt-3">
           <small class="text-muted">Only items in your inventory can be added</small>
@@ -148,19 +117,21 @@
 
 <script>
 import { db } from "@/db";
+import { auth } from "@/db";
 import * as firebase from "firebase/app";
-// import Qty from "js-quantities";
-import { units } from "mathjs";
 import { uniqueId } from "lodash";
 
 export default {
-  name: "Recipes",
+  name: "recipes",
   data() {
     return {
+      refRecipe: null,
+      refInventory: null,
       inventory: [],
       newRecipe: {
         id: null,
         name: null,
+        size: null,
         items: []
       },
       editRecipe: null,
@@ -210,7 +181,7 @@ export default {
         })
         .then(value => {
           if (value === true) {
-            db.collection("recipes")
+            this.refRecipe
               .doc(id)
               .delete()
               .then(function() {
@@ -219,7 +190,7 @@ export default {
           }
         })
         .catch(err => {
-          // An error occurred
+          console.error(err);
         });
     },
     startMakerecipe(recipe) {
@@ -234,11 +205,9 @@ export default {
 
         let newValue = Number(oldValue.value) - Number(item.value);
 
-        db.collection("inventory")
-          .doc(item.ref)
-          .update({
-            value: newValue
-          });
+        this.refInventory.doc(item.ref).update({
+          value: newValue
+        });
       });
     },
     startEditingRecipe(recipe) {
@@ -246,33 +215,34 @@ export default {
       this.showEditModal = true;
     },
     saveEdit() {
-      db.collection("recipes")
-        .doc(this.editRecipe.id)
-        .update({
-          name: this.editRecipe.name,
-          items: this.editRecipe.items
-        });
+      this.refRecipe.doc(this.editRecipe.id).update({
+        name: this.editRecipe.name,
+        items: this.editRecipe.items
+      });
       console.log("Saved");
     },
     handleCancel() {},
     createRecipe() {
-      const newRecipeRef = db.collection("recipes").doc();
+      const newRecipeRef = this.refRecipe.doc();
       this.newRecipe.id = newRecipeRef.id;
     },
     getItemById(id) {
       return this.inventory.find(item => {
-        return item.id === id;
+        if (item.id === id) {
+          return item.id === id;
+        } else {
+          return null;
+        }
       });
     },
     handleOk() {
       const recipe = {
         name: this.newRecipe.name,
+        size: this.newRecipe.size,
         items: this.newRecipe.items,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       };
-      db.collection("recipes")
-        .doc(this.newRecipe.id)
-        .set(recipe);
+      this.refRecipe.doc(this.newRecipe.id).set(recipe);
     },
     enoughInventory(recipeQuantity, inventoryQuantity) {
       if (recipeQuantity <= inventoryQuantity) {
@@ -287,9 +257,46 @@ export default {
       return this.$store.state.units;
     }
   },
-  firestore: {
-    inventory: db.collection("inventory").orderBy("timestamp"),
-    recipes: db.collection("recipes")
+  created() {
+    auth.onAuthStateChanged(user => {
+      this.refRecipe = db
+        .collection("users")
+        .doc(user.uid)
+        .collection("recipes");
+
+      this.refInventory = db
+        .collection("users")
+        .doc(user.uid)
+        .collection("inventory");
+
+      if (user) {
+        db.collection("users")
+          .doc(user.uid)
+          .collection("inventory")
+          .onSnapshot(snapshot => {
+            const inventory = [];
+            snapshot.forEach(doc => {
+              const item = doc.data();
+              item.id = doc.id;
+              inventory.push(item);
+            });
+            this.inventory = inventory;
+          });
+
+        db.collection("users")
+          .doc(user.uid)
+          .collection("recipes")
+          .onSnapshot(snapshot => {
+            const recipes = [];
+            snapshot.forEach(doc => {
+              const item = doc.data();
+              item.id = doc.id;
+              recipes.push(item);
+            });
+            this.recipes = recipes;
+          });
+      }
+    });
   }
 };
 </script>

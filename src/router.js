@@ -18,6 +18,11 @@ export default new Router({
       component: () => import('./views/Recipes.vue')
     },
     {
+      path: '/recipes/:id',
+      name: 'recipe',
+      component: () => import('./components/Recipes/Recipe.vue')
+    },
+    {
       path: '/sign-up',
       name: 'signUp',
       component: () => import('./components/auth/SignUp.vue')
