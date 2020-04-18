@@ -16,7 +16,7 @@
         >Make Recipe</b-btn>
       </div>
     </div>
-    <div class="mb-3">Batch size: {{recipe.size}} - Cost: {{totalCost | currency }}</div>
+    <div class="mb-3">Batch size: {{ recipe.size }} - Cost: {{ totalCost | currency }}</div>
     <b-table
       v-if="inventory"
       class="bg-white"
@@ -24,10 +24,9 @@
       :fields="fields"
       :tbody-tr-class="rowClass"
     >
-      <template
-        v-slot:cell(ref)="data"
-        :class="enoughInventory(data.item.value, getItemById(data.item.ref).value) ? 'text-success' : 'text-danger'"
-      >{{ getItemById(data.item.ref).name }}</template>
+      <template v-slot:cell(ref)="data">
+        <span v-if="data">{{ getItemById(data.item.ref).name }}</span>
+      </template>
       <template v-slot:cell(value)="data">
         {{ data.item.value }}
         {{ data.item.unit }}
@@ -88,11 +87,11 @@
           </div>
         </div>
         <b-dropdown text="Add item">
-          <b-dropdown-item @click="handleAdd(item.id)" v-for="item in inventory" :key="item.id">
-            {{
-            item.name
-            }}
-          </b-dropdown-item>
+          <b-dropdown-item
+            @click="handleAdd(item.id)"
+            v-for="item in inventory"
+            :key="item.id"
+          >{{ item.name }}</b-dropdown-item>
         </b-dropdown>
         <div class="mt-3">
           <small class="text-muted">Only items in your inventory can be added</small>
@@ -114,7 +113,11 @@ export default {
       inventory: [],
       showMakeRecipeModal: false,
       showEditRecipeModal: false,
-      currentRecipe: null,
+      currentRecipe: {
+        name: null,
+        size: null,
+        items: []
+      },
       fields: [
         {
           key: "ref",
@@ -148,14 +151,9 @@ export default {
       });
     },
     itemCost(item) {
-      if (item) {
-        const newItem = this.getItemById(item.ref);
-        console.log(newItem);
-        let itemCost = newItem.cost / newItem.costAmount;
-        return itemCost * item.value;
-      } else {
-        return null;
-      }
+      const newItem = this.getItemById(item.ref);
+      let itemCost = newItem.cost / newItem.costAmount;
+      return itemCost * item.value;
     },
     removeInventory() {
       this.recipe.items.forEach(item => {
@@ -184,7 +182,10 @@ export default {
     },
     startEditingRecipe() {
       this.startEditingRecipe = true;
-      this.currentRecipe = this.recipe;
+      // this.currentRecipe = this.recipe;
+      this.currentRecipe.name = this.recipe.name;
+      this.currentRecipe.size = this.recipe.size;
+      this.currentRecipe.items = this.recipe.items;
     }
   },
   computed: {

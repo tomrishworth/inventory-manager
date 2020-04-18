@@ -18,16 +18,16 @@ library.add(farEllipsisV, farPlus, farPen, farTrashAlt);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
-import { firestorePlugin } from 'vuefire';
+// import { firestorePlugin } from 'vuefire';
 import BootstrapVue from 'bootstrap-vue';
 import { formatMoney } from 'accounting';
 
-Vue.use(firestorePlugin);
+// Vue.use(firestorePlugin);
 Vue.use(BootstrapVue, {
   BToast: {
-    autoHideDelay: 3000,
+    autoHideDelay: 5000,
     solid: true,
-    variant: 'dark',
+    variant: 'primary',
     toaster: 'b-toaster-bottom-center',
     toastClass: 'snack'
   }

@@ -31,20 +31,15 @@
       </router-link>
     </div>
     <b-nav vertical>
-      <b-nav-item to="/">
-        <img src="../assets/images/warehouse-cart-icon.svg" /> Inventory
-      </b-nav-item>
-      <b-nav-item to="/recipes">
-        <img src="../assets/images/task-list-icon.svg" /> Recipes
-      </b-nav-item>
-      <b-nav-item to="/settings">
-        <img src="../assets/images/cog-icon.svg" /> Settings
-      </b-nav-item>
+      <b-nav-item to="/"> <img src="../assets/images/warehouse-cart-icon.svg" /> Inventory </b-nav-item>
+      <b-nav-item to="/recipes"> <img src="../assets/images/task-list-icon.svg" /> Recipes </b-nav-item>
+      <b-nav-item to="/settings"> <img src="../assets/images/cog-icon.svg" /> Settings </b-nav-item>
     </b-nav>
     <div class="mt-auto">
       <b-dropdown variant="link" v-if="currentUser" right>
         <template slot="button-content">
-          <img width="50" class="img-thumbnail rounded-circle ml-2" :src="currentUser.photoURL" />
+          <b-avatar :src="currentUser.photoURL" variant="light"></b-avatar>
+          <!-- <img width="50" class="img-thumbnail rounded-circle ml-2" :src="currentUser.photoURL" /> -->
           {{ currentUser.displayName }}
         </template>
         <b-dropdown-item href="#">Profile</b-dropdown-item>
@@ -58,21 +53,21 @@
 </template>
 
 <script>
-import { auth } from "@/db";
+import { auth } from '@/db';
 
 export default {
   methods: {
     logout() {
       auth.signOut().then(() => {
-        this.$router.replace("signIn");
+        this.$router.replace('signIn');
       });
-    }
+    },
   },
   computed: {
     currentUser() {
       return this.$store.state.currentUser;
-    }
-  }
+    },
+  },
 };
 </script>
 

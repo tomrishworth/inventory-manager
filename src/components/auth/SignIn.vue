@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import { signInWithGoogle } from "@/db";
+import { mapActions } from "vuex";
 
 export default {
   name: "signIn",
@@ -60,15 +60,7 @@ export default {
     };
   },
   methods: {
-    signIn() {
-      signInWithGoogle()
-        .then(() => {
-          this.$router.replace("inventory");
-        })
-        .catch(err => {
-          this.feedback = err.message;
-        });
-    }
+    ...mapActions(["signIn"])
   }
 };
 </script>

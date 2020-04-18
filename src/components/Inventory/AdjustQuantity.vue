@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="adjust-quantity">
     <b-button size="sm" variant="outline-primary" :id="`popover-target-${item.id}`">Edit</b-button>
     <b-popover
       :ref="popover"
@@ -49,6 +49,13 @@ export default {
   methods: {
     onOk() {
       const name = this.item.name;
+      if (this.initalUnit === "kg") {
+        this.initalValue = this.initalValue * 1000;
+        this.initalUnit = "g";
+      } else if (this.initalUnit === "litres") {
+        this.initalValue = this.initalValue * 1000;
+        this.initalUnit = "ml";
+      }
       db.collection("users")
         .doc(this.$store.state.currentUser.uid)
         .collection("inventory")
@@ -64,8 +71,16 @@ export default {
       this.popoverShow = false;
     },
     onShow() {
-      this.initalValue = this.item.value;
-      this.initalUnit = this.item.unit;
+      if (this.item.value > 1000 && this.item.unit === "g") {
+        this.initalValue = this.item.value / 1000;
+        this.initalUnit = "kg";
+      } else if (this.item.value > 1000 && this.item.unit === "ml") {
+        this.initalValue = this.item.value / 1000;
+        this.initalUnit = "litres";
+      } else {
+        this.initalValue = this.item.value;
+        this.initalUnit = this.item.unit;
+      }
     },
     onShown() {
       this.focusRef(this.$refs.input);
@@ -77,6 +92,17 @@ export default {
         });
       });
     }
+    // convertedValue(value, unit) {
+    //   if (value > 1000 && unit === 'g') {
+    //     const newValue = value / 1000;
+    //     return newValue + ' kg';
+    //   } else if (value > 1000 && unit === 'ml') {
+    //     const newValue = value / 1000;
+    //     return newValue + ' litres';
+    //   } else {
+    //     return value + ' ' + unit;
+    //   }
+    // },
   },
   computed: {
     options() {

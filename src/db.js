@@ -8,7 +8,7 @@ const firebaseConfig = {
   authDomain: 'inventory-manager-99dea.firebaseapp.com',
   databaseURL: 'https://inventory-manager-99dea.firebaseio.com',
   projectId: 'inventory-manager-99dea',
-  storageBucket: '',
+  storageBucket: 'gs://inventory-manager-99dea.appspot.com',
   messagingSenderId: '685954992489',
   appId: '1:685954992489:web:e98c11058d98cc9b'
 };

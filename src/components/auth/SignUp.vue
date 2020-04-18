@@ -47,26 +47,28 @@
 </template>
 
 <script>
-import { signInWithGoogle } from "@/db";
-import { db } from "@/db";
+// import { signInWithGoogle } from "@/db";
+// import { db } from "@/db";
+import { mapActions } from "vuex";
 
 export default {
   name: "SignUp",
   methods: {
-    signUp() {
-      signInWithGoogle()
-        .then(cred => {
-          db.collection("users")
-            .doc(cred.user.uid)
-            .set({
-              name: cred.user.displayName,
-              userId: cred.user.uid
-            });
-        })
-        .then(() => {
-          this.$router.replace("inventory");
-        });
-    }
+    ...mapActions(["signUp"])
+    // signUp() {
+    //   signInWithGoogle()
+    //     .then(cred => {
+    //       db.collection("users")
+    //         .doc(cred.user.uid)
+    //         .set({
+    //           name: cred.user.displayName,
+    //           userId: cred.user.uid
+    //         });
+    //     })
+    //     .then(() => {
+    //       this.$router.replace("inventory");
+    //     });
+    // }
   }
 };
 </script>

@@ -10,6 +10,9 @@
     </div>
     <div v-if="recipes" class="mb-4">
       <div v-for="recipe in recipes" :key="recipe.id">
+        <div v-if="recipe.imageUrl">
+          <img :src="recipe.imageUrl" />
+        </div>
         <router-link :to="{ name: 'recipe', params: { id: recipe.id } }">{{ recipe.name }}</router-link>
       </div>
     </div>
@@ -28,6 +31,14 @@
         </b-form-group>
         <b-form-group label="Batch Size" label-sr-only label-for="size">
           <b-form-input placeholder="Batch Size" v-model="newRecipe.size" id="size"></b-form-input>
+        </b-form-group>
+        <b-form-group label="Image" label-for="image">
+          <b-form-file
+            v-model="newRecipe.image"
+            accept=".jpg, .png, .gif"
+            placeholder="Choose a file or drop it here..."
+            drop-placeholder="Drop file here..."
+          ></b-form-file>
         </b-form-group>
 
         <div class="row" v-if="newRecipe.items.length">
@@ -119,6 +130,7 @@
 import { db } from "@/db";
 import { auth } from "@/db";
 import * as firebase from "firebase/app";
+import "firebase/storage";
 import { uniqueId } from "lodash";
 
 export default {
@@ -131,6 +143,8 @@ export default {
       newRecipe: {
         id: null,
         name: null,
+        image: null,
+        imageUrl: null,
         size: null,
         items: []
       },
@@ -236,13 +250,31 @@ export default {
       });
     },
     handleOk() {
-      const recipe = {
-        name: this.newRecipe.name,
-        size: this.newRecipe.size,
-        items: this.newRecipe.items,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      };
-      this.refRecipe.doc(this.newRecipe.id).set(recipe);
+      const filename = this.newRecipe.id + "-" + this.newRecipe.image.name;
+      const storageRef = firebase.storage().ref();
+      const imagesRef = storageRef.child("images");
+      const imageRef = imagesRef.child(filename);
+      const uploadTask = imageRef.put(this.newRecipe.image);
+
+      uploadTask.on("state_changed", function(snapshot) {
+        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log("Upload progress is " + progress + "% done");
+      });
+
+      uploadTask
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => (this.newRecipe.imageUrl = url))
+        .then(() => {
+          const recipe = {
+            name: this.newRecipe.name,
+            size: this.newRecipe.size,
+            imageUrl: this.newRecipe.imageUrl,
+            items: this.newRecipe.items,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          };
+
+          this.refRecipe.doc(this.newRecipe.id).set(recipe);
+        });
     },
     enoughInventory(recipeQuantity, inventoryQuantity) {
       if (recipeQuantity <= inventoryQuantity) {

@@ -9,19 +9,24 @@
       </div>
     </div>
     <div class="mb-4 w-75">
-      <b-table class="bg-white" :items="inventory" :fields="fields">
+      <b-table class="inventory bg-white" :items="inventory" :fields="fields">
         <template v-slot:cell(test)="data">
           <div class="d-flex align-items-baseline">
-            <div class="mr-3">{{ data.item.value }} {{ data.item.unit }}</div>
+            <div class="mr-3">
+              <!-- {{ data.item.value }} {{ data.item.unit }} -->
+              <div>{{ convertedValue(data.item.value, data.item.unit) }}</div>
+            </div>
             <adjust-quantity :item="data.item"></adjust-quantity>
           </div>
         </template>
         <template v-slot:cell(costInfo)="data">
           <div v-if="data.item.cost">
-            <div>${{ data.item.cost }} per {{ data.item.costAmount }} {{ data.item.costUnit }}</div>
-            <div
-              class="text-sm text-muted"
-            >{{ unitCost(data.item.cost, data.item.costAmount) }} per {{ data.item.costUnit }}</div>
+            <!-- <div>${{ data.item.cost }} per {{ data.item.costAmount }} {{ data.item.costUnit }}</div> -->
+            <div>${{ data.item.cost }} per {{ convertedValue(data.item.costAmount, data.item.costUnit) }}</div>
+            <div class="text-sm text-muted">
+              <!-- {{ unitCost(data.item.cost, data.item.costAmount) }} per {{ data.item.costUnit }} -->
+              {{ unitCost(data.item) }}
+            </div>
           </div>
         </template>
         <template v-slot:cell(actions)="data">
@@ -39,6 +44,8 @@
         </template>
       </b-table>
     </div>
+
+    <!-- Add Inventory Item Modal -->
     <b-modal
       id="addInventory"
       title="Add Inventory Item"
@@ -62,7 +69,7 @@
         <h3 class="text-md">Costing Info</h3>
         <p class="text-muted">e.g. $20 per 3kgs</p>
         <div class="d-flex align-items-center">
-          <b-form-group class="mr-2" label="Cost" label-for="cost" style="width:120px">
+          <b-form-group prepend="$" class="mr-2" label="Cost" label-for="cost" style="width:120px">
             <b-form-input
               type="number"
               step="0.01"
@@ -87,6 +94,8 @@
         </div>
       </b-form>
     </b-modal>
+
+    <!-- Edit Inventory Item Modal -->
     <b-modal ref="viewItemModal" id="viewItem" title="Edit Item" ok-title="Save" @ok="handleEdit">
       <b-form v-if="currentItem" class>
         <b-form-group class label="Name" label-for="name">
@@ -103,7 +112,7 @@
         <h3 class="text-md">Costing Info</h3>
         <p class="text-muted">e.g. $20 per 3kgs</p>
         <div class="d-flex align-items-center">
-          <b-form-group class="mr-2" label="Cost" label-for="cost" style="width:120px">
+          <b-form-group prepend="$" class="mr-2" label="Cost" label-for="cost" style="width:120px">
             <b-form-input
               type="number"
               step="0.01"
@@ -184,6 +193,20 @@ export default {
   },
   methods: {
     addItem() {
+      if (this.unit === "kg") {
+        this.value = this.value * 1000;
+        this.unit = "g";
+      } else if (this.unit === "litres") {
+        this.value = this.value * 1000;
+        this.unit = "ml";
+      }
+      if (this.costUnit === "kg") {
+        this.costAmount = this.costAmount * 1000;
+        this.costUnit = "g";
+      } else if (this.costUnit === "litres") {
+        this.costAmount = this.costAmount * 1000;
+        this.costUnit = "ml";
+      }
       db.collection("users")
         .doc(this.$store.state.currentUser.uid)
         .collection("inventory")
@@ -206,8 +229,16 @@ export default {
     clearForm() {
       (this.name = null), (this.value = null), (this.unit = null);
     },
-    viewInventory(value) {
-      this.currentItem = value;
+    viewInventory(item) {
+      this.currentItem = item;
+
+      if (item.value > 1000 && item.unit === "g") {
+        this.currentItem.value = item.value / 1000;
+        this.currentItem.unit = "kg";
+      } else if (item.value > 1000 && item.unit === "ml") {
+        this.currentItem.value = item.value / 1000;
+        this.currentItem.unit = "litres";
+      }
       this.$refs["viewItemModal"].show();
     },
     handleDelete(item) {
@@ -249,11 +280,25 @@ export default {
         });
     },
     handleEdit() {
+      if (this.currentItem.unit === "kg") {
+        this.currentItem.value = this.currentItem.value * 1000;
+        this.currentItem.unit = "g";
+      } else if (this.currentItem.unit === "litres") {
+        this.currentItem.value = this.currentItem.value * 1000;
+        this.currentItem.unit = "ml";
+      }
+      if (this.currentItem.costUnit === "kg") {
+        this.currentItem.costAmount = this.currentItem.costAmount * 1000;
+        this.currentItem.costUnit = "g";
+      } else if (this.currentItem.costUnit === "litres") {
+        this.currentItem.costAmount = this.currentItem.costAmount * 1000;
+        this.currentItem.costUnit = "ml";
+      }
       this.$store.dispatch("inventoryItemLoadingStatus", {
         id: this.currentItem.id,
         loading: true
       });
-      // const name = this.currentItem.name;
+      const name = this.currentItem.name;
       db.collection("users")
         .doc(this.$store.state.currentUser.uid)
         .collection("inventory")
@@ -264,11 +309,37 @@ export default {
             id: this.currentItem.id,
             loading: false
           });
-          // this.$bvToast.toast(`${name} updated`);
+          this.$bvToast.toast(`${name} updated`);
         });
     },
-    unitCost(cost, costAmount) {
-      return formatMoney(cost / costAmount);
+    // unitCost(cost, costAmount) {
+    //   if (costAmount > 1000)
+    //   return formatMoney(cost / costAmount);
+    // },
+    unitCost(item) {
+      console.log(item);
+      if (item.costAmount > 1000 && item.costUnit === "g") {
+        let convertedValue = item.costAmount / 1000;
+        return formatMoney(item.cost / convertedValue) + " per kg";
+      } else if (item.costAmount > 1000 && item.costUnit === "ml") {
+        let convertedValue = item.costAmount / 1000;
+        return formatMoney(item.cost / convertedValue) + " per litre";
+      } else {
+        return (
+          formatMoney(item.cost / item.costAmount) + " per " + item.costUnit
+        );
+      }
+    },
+    convertedValue(value, unit) {
+      if (value > 1000 && unit === "g") {
+        const newValue = value / 1000;
+        return newValue + " kg";
+      } else if (value > 1000 && unit === "ml") {
+        const newValue = value / 1000;
+        return newValue + " litres";
+      } else {
+        return value + " " + unit;
+      }
     }
   },
   computed: {
@@ -309,3 +380,21 @@ export default {
   }
 };
 </script>
+
+
+<style lang="scss">
+.adjust-quantity {
+  opacity: 0;
+  transition: opacity 1000ms ease;
+}
+
+.inventory {
+  tr {
+    &:hover {
+      .adjust-quantity {
+        opacity: 1;
+      }
+    }
+  }
+}
+</style>
