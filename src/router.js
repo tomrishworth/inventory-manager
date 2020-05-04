@@ -10,27 +10,28 @@ export default new Router({
     {
       path: '/',
       name: 'inventory',
-      component: () => import('./views/Inventory')
+      component: () => import('./views/Inventory'),
     },
     {
       path: '/recipes',
       name: 'recipes',
-      component: () => import('./views/Recipes.vue')
+      component: () => import('./views/Recipes.vue'),
     },
     {
       path: '/recipes/:id',
       name: 'recipe',
-      component: () => import('./components/Recipes/Recipe.vue')
+      props: true,
+      component: () => import('./components/Recipes/Recipe.vue'),
     },
     {
       path: '/sign-up',
       name: 'signUp',
-      component: () => import('./components/auth/SignUp.vue')
+      component: () => import('./components/auth/SignUp.vue'),
     },
     {
       path: '/sign-in',
       name: 'signIn',
-      component: () => import('./components/auth/SignIn.vue')
-    }
-  ]
+      component: () => import('./components/auth/SignIn.vue'),
+    },
+  ],
 });

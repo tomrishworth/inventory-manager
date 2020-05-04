@@ -6,6 +6,9 @@
         <b-btn size="sm" variant="primary" v-b-modal.addInventory>
           <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
         </b-btn>
+        <b-btn size="sm" variant="primary" @click="handleAdd">
+          <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
+        </b-btn>
       </div>
     </div>
     <div class="mb-4 w-75">
@@ -34,7 +37,7 @@
             <template slot="button-content">
               <font-awesome-icon :icon="['far', 'ellipsis-v']"></font-awesome-icon>
             </template>
-            <b-dropdown-item @click="viewInventory(data.item)">
+            <b-dropdown-item @click="handleEdit(data.item)">
               <font-awesome-icon :icon="['far', 'pen']"></font-awesome-icon>Edit
             </b-dropdown-item>
             <b-dropdown-item @click="handleDelete(data.item)">
@@ -46,20 +49,27 @@
     </div>
 
     <!-- Add Inventory Item Modal -->
-    <b-modal
+    <!-- <b-modal
       id="addInventory"
       title="Add Inventory Item"
       @ok="addItem"
       ok-title="Add"
       @shown="focusInput"
+      size="lg"
     >
       <b-form class>
-        <b-form-group class label="Name" label-for="name">
+        <b-form-group class="w-50" label="Name" label-for="name">
           <b-form-input ref="name" v-model="name" placeholder="e.g. Oil" id="name"></b-form-input>
         </b-form-group>
         <div class="d-flex">
           <b-form-group class="mr-2" label="Amount in Inventory" label-for="amount">
-            <b-form-input type="number" step="0.01" v-model.number="value" id="amount"></b-form-input>
+            <b-form-input
+              type="number"
+              placeholder="0"
+              step="0.01"
+              v-model.number="value"
+              id="amount"
+            ></b-form-input>
           </b-form-group>
           <b-form-group class label="Unit">
             <b-form-select v-model="unit" :options="options"></b-form-select>
@@ -69,16 +79,18 @@
         <h3 class="text-md">Costing Info</h3>
         <p class="text-muted">e.g. $20 per 3kgs</p>
         <div class="d-flex align-items-center">
-          <b-form-group prepend="$" class="mr-2" label="Cost" label-for="cost" style="width:120px">
-            <b-form-input
-              type="number"
-              step="0.01"
-              placeholder="e.g. 20"
-              v-model.number="cost"
-              id="cost"
-            ></b-form-input>
+          <b-form-group label="Cost" label-for="cost" style="width:140px">
+            <b-input-group prepend="$">
+              <b-form-input
+                type="number"
+                step="0.01"
+                placeholder="e.g. 20"
+                v-model.number="cost"
+                id="cost"
+              ></b-form-input>
+            </b-input-group>
           </b-form-group>
-          <div class="mx-2 font-italic text-muted">Per</div>
+          <div class="mx-3 font-italic text-muted pull-down-5">Per</div>
           <b-form-group class="mr-2" label="Amount" label-for="costAmount" style="width:120px">
             <b-form-input
               type="number"
@@ -93,10 +105,10 @@
           </b-form-group>
         </div>
       </b-form>
-    </b-modal>
+    </b-modal>-->
 
     <!-- Edit Inventory Item Modal -->
-    <b-modal ref="viewItemModal" id="viewItem" title="Edit Item" ok-title="Save" @ok="handleEdit">
+    <!-- <b-modal ref="viewItemModal" id="viewItem" title="Edit Item" ok-title="Save" @ok="handleEdit">
       <b-form v-if="currentItem" class>
         <b-form-group class label="Name" label-for="name">
           <b-form-input ref="name" v-model="currentItem.name" placeholder="e.g. Oil" id="name"></b-form-input>
@@ -136,7 +148,8 @@
           </b-form-group>
         </div>
       </b-form>
-    </b-modal>
+    </b-modal>-->
+    <create-edit-inventory-item-modal :currentItem="currentItem"></create-edit-inventory-item-modal>
   </div>
 </template>
 
@@ -146,6 +159,7 @@ import { auth } from "@/db";
 import * as firebase from "firebase/app";
 import AdjustQuantity from "@/components/Inventory/AdjustQuantity";
 import { formatMoney } from "accounting";
+import CreateEditInventoryItemModal from "@/components/Inventory/CreateEditInventoryItemModal.vue";
 // import User from "@/components/User";
 // import Multiselect from "vue-multiselect";
 // import Qty from "js-quantities";
@@ -157,7 +171,8 @@ import { formatMoney } from "accounting";
 export default {
   name: "home",
   components: {
-    AdjustQuantity
+    AdjustQuantity,
+    CreateEditInventoryItemModal
   },
   data() {
     return {
@@ -166,7 +181,6 @@ export default {
       user: null,
       currentItem: null,
       users: [],
-      inventory: [],
       name: null,
       unit: "kg",
       cost: null,
@@ -192,55 +206,55 @@ export default {
     };
   },
   methods: {
-    addItem() {
-      if (this.unit === "kg") {
-        this.value = this.value * 1000;
-        this.unit = "g";
-      } else if (this.unit === "litres") {
-        this.value = this.value * 1000;
-        this.unit = "ml";
-      }
-      if (this.costUnit === "kg") {
-        this.costAmount = this.costAmount * 1000;
-        this.costUnit = "g";
-      } else if (this.costUnit === "litres") {
-        this.costAmount = this.costAmount * 1000;
-        this.costUnit = "ml";
-      }
-      db.collection("users")
-        .doc(this.$store.state.currentUser.uid)
-        .collection("inventory")
-        .add({
-          name: this.name,
-          value: this.value,
-          unit: this.unit,
-          cost: this.cost,
-          costAmount: this.costAmount,
-          costUnit: this.costUnit,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
-          this.clearForm();
-        });
-    },
-    focusInput() {
-      this.$refs.name.$el.focus();
-    },
-    clearForm() {
-      (this.name = null), (this.value = null), (this.unit = null);
-    },
-    viewInventory(item) {
-      this.currentItem = item;
+    // addItem() {
+    //   if (this.unit === "kg") {
+    //     this.value = this.value * 1000;
+    //     this.unit = "g";
+    //   } else if (this.unit === "litres") {
+    //     this.value = this.value * 1000;
+    //     this.unit = "ml";
+    //   }
+    //   if (this.costUnit === "kg") {
+    //     this.costAmount = this.costAmount * 1000;
+    //     this.costUnit = "g";
+    //   } else if (this.costUnit === "litres") {
+    //     this.costAmount = this.costAmount * 1000;
+    //     this.costUnit = "ml";
+    //   }
+    //   db.collection("users")
+    //     .doc(this.$store.state.currentUser.uid)
+    //     .collection("inventory")
+    //     .add({
+    //       name: this.name,
+    //       value: this.value,
+    //       unit: this.unit,
+    //       cost: this.cost,
+    //       costAmount: this.costAmount,
+    //       costUnit: this.costUnit,
+    //       timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    //     })
+    //     .then(() => {
+    //       this.clearForm();
+    //     });
+    // },
+    // focusInput() {
+    //   this.$refs.name.$el.focus();
+    // },
+    // clearForm() {
+    //   (this.name = null), (this.value = null), (this.unit = null);
+    // },
+    // viewInventory(item) {
+    //   this.currentItem = item;
 
-      if (item.value > 1000 && item.unit === "g") {
-        this.currentItem.value = item.value / 1000;
-        this.currentItem.unit = "kg";
-      } else if (item.value > 1000 && item.unit === "ml") {
-        this.currentItem.value = item.value / 1000;
-        this.currentItem.unit = "litres";
-      }
-      this.$refs["viewItemModal"].show();
-    },
+    //   if (item.value > 1000 && item.unit === "g") {
+    //     this.currentItem.value = item.value / 1000;
+    //     this.currentItem.unit = "kg";
+    //   } else if (item.value > 1000 && item.unit === "ml") {
+    //     this.currentItem.value = item.value / 1000;
+    //     this.currentItem.unit = "litres";
+    //   }
+    //   this.$refs["viewItemModal"].show();
+    // },
     handleDelete(item) {
       const name = item.name;
       this.$bvModal
@@ -279,45 +293,51 @@ export default {
           this.$bvToast.toast(`${name} deleted`);
         });
     },
-    handleEdit() {
-      if (this.currentItem.unit === "kg") {
-        this.currentItem.value = this.currentItem.value * 1000;
-        this.currentItem.unit = "g";
-      } else if (this.currentItem.unit === "litres") {
-        this.currentItem.value = this.currentItem.value * 1000;
-        this.currentItem.unit = "ml";
-      }
-      if (this.currentItem.costUnit === "kg") {
-        this.currentItem.costAmount = this.currentItem.costAmount * 1000;
-        this.currentItem.costUnit = "g";
-      } else if (this.currentItem.costUnit === "litres") {
-        this.currentItem.costAmount = this.currentItem.costAmount * 1000;
-        this.currentItem.costUnit = "ml";
-      }
-      this.$store.dispatch("inventoryItemLoadingStatus", {
-        id: this.currentItem.id,
-        loading: true
-      });
-      const name = this.currentItem.name;
-      db.collection("users")
-        .doc(this.$store.state.currentUser.uid)
-        .collection("inventory")
-        .doc(this.currentItem.id)
-        .set(this.currentItem)
-        .then(() => {
-          this.$store.dispatch("inventoryItemLoadingStatus", {
-            id: this.currentItem.id,
-            loading: false
-          });
-          this.$bvToast.toast(`${name} updated`);
-        });
+    handleAdd() {
+      this.currentItem = null;
+      this.$bvModal.show("create-edit-inventory-item-modal");
+    },
+    handleEdit(item) {
+      this.currentItem = item;
+      this.$bvModal.show("create-edit-inventory-item-modal");
+
+      // if (this.currentItem.unit === "kg") {
+      //   this.currentItem.value = this.currentItem.value * 1000;
+      //   this.currentItem.unit = "g";
+      // } else if (this.currentItem.unit === "litres") {
+      //   this.currentItem.value = this.currentItem.value * 1000;
+      //   this.currentItem.unit = "ml";
+      // }
+      // if (this.currentItem.costUnit === "kg") {
+      //   this.currentItem.costAmount = this.currentItem.costAmount * 1000;
+      //   this.currentItem.costUnit = "g";
+      // } else if (this.currentItem.costUnit === "litres") {
+      //   this.currentItem.costAmount = this.currentItem.costAmount * 1000;
+      //   this.currentItem.costUnit = "ml";
+      // }
+      // this.$store.dispatch("inventoryItemLoadingStatus", {
+      //   id: this.currentItem.id,
+      //   loading: true
+      // });
+      // const name = this.currentItem.name;
+      // db.collection("users")
+      //   .doc(this.$store.state.currentUser.uid)
+      //   .collection("inventory")
+      //   .doc(this.currentItem.id)
+      //   .set(this.currentItem)
+      //   .then(() => {
+      //     this.$store.dispatch("inventoryItemLoadingStatus", {
+      //       id: this.currentItem.id,
+      //       loading: false
+      //     });
+      //     this.$bvToast.toast(`${name} updated`);
+      //   });
     },
     // unitCost(cost, costAmount) {
     //   if (costAmount > 1000)
     //   return formatMoney(cost / costAmount);
     // },
     unitCost(item) {
-      console.log(item);
       if (item.costAmount > 1000 && item.costUnit === "g") {
         let convertedValue = item.costAmount / 1000;
         return formatMoney(item.cost / convertedValue) + " per kg";
@@ -331,12 +351,42 @@ export default {
       }
     },
     convertedValue(value, unit) {
-      if (value > 1000 && unit === "g") {
-        const newValue = value / 1000;
-        return newValue + " kg";
-      } else if (value > 1000 && unit === "ml") {
-        const newValue = value / 1000;
-        return newValue + " litres";
+      if (unit === "g") {
+        const newValue = this.$units(value)
+          .from("g")
+          .toBest();
+        return `${newValue.val} ${newValue.unit}`;
+      } else if (unit === "ml") {
+        const newValue = this.$units(value)
+          .from("ml")
+          .toBest({
+            exclude: [
+              "mm3",
+              "cm3",
+              "cl",
+              "dl",
+              "kl",
+              "m3",
+              "km3",
+              "krm",
+              "tsk",
+              "msk",
+              "kkp",
+              "glas",
+              "kanna",
+              "tsp",
+              "Tbs",
+              "in3",
+              "fl-oz",
+              "cup",
+              "pnt",
+              "qt",
+              "gal",
+              "ft3",
+              "yd3"
+            ]
+          });
+        return `${newValue.val} ${newValue.unit}`;
       } else {
         return value + " " + unit;
       }
@@ -353,31 +403,34 @@ export default {
         return null;
       }
     },
+    inventory() {
+      return this.$store.state.inventory;
+    },
     indexedInventory() {
       return this.inventory.reduce((indexedItems, item) => {
         indexedItems[item.id] = item;
         return indexedItems;
       }, {});
     }
-  },
-  created() {
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        db.collection("users")
-          .doc(user.uid)
-          .collection("inventory")
-          .onSnapshot(snapshot => {
-            const inventory = [];
-            snapshot.forEach(doc => {
-              const item = doc.data();
-              item.id = doc.id;
-              inventory.push(item);
-            });
-            this.inventory = inventory;
-          });
-      }
-    });
   }
+  // created() {
+  //   auth.onAuthStateChanged(user => {
+  //     if (user) {
+  //       db.collection("users")
+  //         .doc(user.uid)
+  //         .collection("inventory")
+  //         .onSnapshot(snapshot => {
+  //           const inventory = [];
+  //           snapshot.forEach(doc => {
+  //             const item = doc.data();
+  //             item.id = doc.id;
+  //             inventory.push(item);
+  //           });
+  //           this.inventory = inventory;
+  //         });
+  //     }
+  //   });
+  // }
 };
 </script>
 

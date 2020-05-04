@@ -1,6 +1,7 @@
 // Colors
 $dark: #162a41;
-$light: #f1f4f8;
+// $ligh#f1f4f84f8;
+$light: #f4f6f8;
 
 $body-color: $dark;
 
@@ -18,51 +19,51 @@ $spacers: map-merge(
   (
     0: 0,
     1: (
-      $spacer * 0.25
+      $spacer * 0.25,
     ),
     2: (
-      $spacer * 0.5
+      $spacer * 0.5,
     ),
     3: (
-      $spacer * 0.75
+      $spacer * 0.75,
     ),
     4: $spacer,
     5: (
-      $spacer * 1.5
+      $spacer * 1.5,
     ),
     6: (
-      $spacer * 2
+      $spacer * 2,
     ),
     7: (
-      $spacer * 3
+      $spacer * 3,
     ),
     8: (
-      $spacer * 4
+      $spacer * 4,
     ),
     9: (
-      $spacer * 6
+      $spacer * 6,
     ),
     10: (
-      $spacer * 8
+      $spacer * 8,
     ),
     11: (
-      $spacer * 12
+      $spacer * 12,
     ),
     12: (
-      $spacer * 16
+      $spacer * 16,
     ),
     13: (
-      $spacer * 24
+      $spacer * 24,
     ),
     14: (
-      $spacer * 32
+      $spacer * 32,
     ),
     15: (
-      $spacer * 40
+      $spacer * 40,
     ),
     16: (
-      $spacer * 48
-    )
+      $spacer * 48,
+    ),
   ),
   $spacers
 );
@@ -108,6 +109,10 @@ $h3-font-size: $text-xl;
 $h4-font-size: $text-lg;
 $h5-font-size: $text-lg;
 $h6-font-size: $text-lg;
+
+// Forms
+
+$label-margin-bottom: 0.4rem;
 
 // Modals
 

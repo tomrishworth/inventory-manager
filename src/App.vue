@@ -15,6 +15,7 @@
 import AppSidebar from "@/components/AppSidebar.vue";
 import SignIn from "@/components/auth/SignIn.vue";
 import { auth } from "@/db.js";
+import { db } from "@/db";
 
 export default {
   components: {
@@ -28,8 +29,20 @@ export default {
   },
   created() {
     auth.onAuthStateChanged(user => {
+      // this.refRecipe = db
+      //   .collection("users")
+      //   .doc(user.uid)
+      //   .collection("recipes");
+
+      // this.refInventory = db
+      //   .collection("users")
+      //   .doc(user.uid)
+      //   .collection("inventory");
+
       if (user) {
         this.$store.dispatch("setCurrentUser", user);
+        this.$store.dispatch("getInventory", user);
+        this.$store.dispatch("getRecipes", user);
       } else {
         this.$store.dispatch("setCurrentUser", null);
       }

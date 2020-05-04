@@ -11,7 +11,7 @@ import {
   faEllipsisV as farEllipsisV,
   faPlus as farPlus,
   faPen as farPen,
-  faTrashAlt as farTrashAlt
+  faTrashAlt as farTrashAlt,
 } from '@fortawesome/pro-regular-svg-icons';
 
 library.add(farEllipsisV, farPlus, farPen, farTrashAlt);
@@ -21,6 +21,11 @@ Vue.component('font-awesome-icon', FontAwesomeIcon);
 // import { firestorePlugin } from 'vuefire';
 import BootstrapVue from 'bootstrap-vue';
 import { formatMoney } from 'accounting';
+import VueUnits from 'vue-units';
+import vSelect from 'vue-select';
+
+Vue.component('v-select', vSelect);
+Vue.use(VueUnits);
 
 // Vue.use(firestorePlugin);
 Vue.use(BootstrapVue, {
@@ -29,8 +34,8 @@ Vue.use(BootstrapVue, {
     solid: true,
     variant: 'primary',
     toaster: 'b-toaster-bottom-center',
-    toastClass: 'snack'
-  }
+    toastClass: 'snack',
+  },
 });
 
 Vue.filter('currency', function(value) {
@@ -42,5 +47,5 @@ Vue.config.productionTip = false;
 new Vue({
   router,
   store,
-  render: h => h(App)
+  render: (h) => h(App),
 }).$mount('#app');

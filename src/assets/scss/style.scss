@@ -4,6 +4,7 @@
 @import '~bootstrap/scss/bootstrap';
 @import '~bootstrap-vue/dist/bootstrap-vue.css';
 @import '~vue-multiselect/dist/vue-multiselect.min.css';
+@import '~vue-select/src/scss/vue-select.scss';
 
 // Base
 @import 'base/buttons';
@@ -23,4 +24,10 @@ body {
 
 #app.has-sidebar {
   margin-left: 240px;
+}
+
+.box {
+  @extend .bg-white;
+  @extend .border;
+  @extend .rounded;
 }

@@ -1,5 +1,6 @@
 <template>
   <div class="container" v-if="recipe">
+    <router-link to="/recipes">Recipes</router-link>
     <div class="d-flex my-4">
       <h1 class="page-title mb-0">{{ recipe.name }}</h1>
       <div class="ml-4">
@@ -9,6 +10,7 @@
           variant="outline-secondary"
           size="sm"
         >Edit Recipe</b-btn>
+        <b-btn class="mr-2" variant="outline-secondary" size="sm">Delete Recipe</b-btn>
         <b-btn
           @click="showMakeRecipeModal = !showMakeRecipeModal"
           size="sm"
@@ -16,31 +18,70 @@
         >Make Recipe</b-btn>
       </div>
     </div>
-    <div class="mb-3">Batch size: {{ recipe.size }} - Cost: {{ totalCost | currency }}</div>
-    <b-table
-      v-if="inventory"
-      class="bg-white"
-      :items="recipe.items"
-      :fields="fields"
-      :tbody-tr-class="rowClass"
-    >
-      <template v-slot:cell(ref)="data">
-        <span v-if="data">{{ getItemById(data.item.ref).name }}</span>
-      </template>
-      <template v-slot:cell(value)="data">
-        {{ data.item.value }}
-        {{ data.item.unit }}
-      </template>
-      <template v-slot:cell(amountInInventory)="data">
-        {{ getItemById(data.item.ref).value }}
-        {{ getItemById(data.item.ref).unit }}
-      </template>
-      <template v-slot:cell(itemCost)="data">
-        <span v-if="inventory">{{ itemCost(data.item) | currency }}</span>
-      </template>
-    </b-table>
+    <div class="row">
+      <div class="col-sm-8">
+        <b-table
+          v-if="inventory"
+          class="bg-white"
+          :items="recipe.items"
+          :fields="fields"
+          :tbody-tr-class="rowClass"
+        >
+          <template v-slot:cell(ref)="data">
+            <span v-if="data">{{ getItemById(data.item.ref).name }}</span>
+          </template>
+          <template v-slot:cell(value)="data">
+            {{ data.item.value }}
+            {{ data.item.unit }}
+          </template>
+          <template v-slot:cell(amountInInventory)="data">
+            {{ getItemById(data.item.ref).value }}
+            {{ getItemById(data.item.ref).unit }}
+          </template>
+          <template v-slot:cell(itemCost)="data">
+            <span>{{ itemCost(data.item) | currency }}</span>
+          </template>
+        </b-table>
+      </div>
+      <div class="col-sm-4">
+        <div class="box p-5 mb-3">
+          <div class="mb-2">
+            <div class="d-flex">
+              <h3 class="text-base line-height-normal mb-0 font-weight-bold">Batch size:</h3>
+              <div class="ml-auto">{{ recipe.batchSize }} {{ recipe.batchLabel}}</div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex">
+              <h3 class="text-base line-height-normal mb-0 font-weight-bold">Cost per batch:</h3>
+              <div class="ml-auto">{{ totalCost | currency }}</div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex">
+              <h3 class="text-base line-height-normal mb-0 font-weight-bold">Cost per unit:</h3>
+              <div class="ml-auto">{{ costPerUnit | currency}}</div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex">
+              <h3 class="text-base line-height-normal mb-0 font-weight-bold">Retail Price:</h3>
+              <div class="ml-auto">{{ recipe.retailPrice | currency}}</div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex">
+              <h3 class="text-base line-height-normal mb-0 font-weight-bold">Profit per unit:</h3>
+              <div class="ml-auto">{{ recipe.retailPrice - costPerUnit | currency}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <b-modal
+    <create-edit-Recipe-Modal :currentRecipe="recipe"></create-edit-Recipe-Modal>
+
+    <!-- <b-modal
       @ok="removeInventory"
       ok-title="Confirm"
       v-model="showMakeRecipeModal"
@@ -54,10 +95,17 @@
           <div class="ml-auto font-weight-bold">{{ item.value }} {{ item.unit }}</div>
         </div>
       </div>
-    </b-modal>
+    </b-modal>-->
 
-    <b-modal title="Edit Recipe" id="editRecipeModal" v-model="showEditRecipeModal">
-      <div class="bg-light p-4">
+    <!-- <b-modal
+      size="lg"
+      @ok="saveEdit"
+      ok-title="Save Changes"
+      title="Edit Recipe"
+      id="editRecipeModal"
+      v-model="showEditRecipeModal"
+    >
+      <div class>
         <b-form-group label="Name" label-sr-only label-for="name">
           <b-form-input placeholder="Recipe name" v-model="currentRecipe.name" id="name"></b-form-input>
         </b-form-group>
@@ -97,27 +145,31 @@
           <small class="text-muted">Only items in your inventory can be added</small>
         </div>
       </div>
-    </b-modal>
+    </b-modal>-->
   </div>
 </template>
 
 <script>
 import { db } from "@/db";
+import createEditRecipeModal from "@/components/Recipes/CreateEditRecipeModal.vue";
 
 export default {
   name: "recipe",
+  props: ["id"],
+  components: {
+    createEditRecipeModal
+  },
   data() {
     return {
-      recipe: null,
       refInventory: null,
-      inventory: [],
       showMakeRecipeModal: false,
       showEditRecipeModal: false,
-      currentRecipe: {
-        name: null,
-        size: null,
-        items: []
-      },
+      currentRecipe: null,
+      // currentRecipe: {
+      //   name: null,
+      //   size: null,
+      //   items: []
+      // },
       fields: [
         {
           key: "ref",
@@ -182,50 +234,87 @@ export default {
     },
     startEditingRecipe() {
       this.startEditingRecipe = true;
-      // this.currentRecipe = this.recipe;
-      this.currentRecipe.name = this.recipe.name;
-      this.currentRecipe.size = this.recipe.size;
-      this.currentRecipe.items = this.recipe.items;
+      this.currentRecipe = this.recipe;
+      // this.currentRecipe.name = this.recipe.name;
+      // this.currentRecipe.size = this.recipe.size;
+      // this.currentRecipe.items = this.recipe.items;
+      // this.showEditRecipeModal = true;
+      this.$bvModal.show("create-edit-recipe-modal");
+    },
+    // Needs refactoring
+    handleDelete(id) {
+      this.$bvModal
+        .msgBoxConfirm("Are you sure you want to delete this recipe?", {
+          title: "Please Confirm",
+          size: "sm",
+          okVariant: "danger",
+          okTitle: "Delete",
+          cancelTitle: "Cancel",
+          footerClass: "p-2",
+          centered: true
+        })
+        .then(value => {
+          if (value === true) {
+            this.refRecipe
+              .doc(id)
+              .delete()
+              .then(function() {
+                console.log("Document successfully deleted!");
+              });
+          }
+        })
+        .catch(err => {
+          console.error(err);
+        });
     }
   },
   computed: {
+    recipe() {
+      return this.$store.getters.getRecipeById(this.id);
+    },
+    inventory() {
+      return this.$store.getters.inventory;
+    },
     totalCost() {
       let cost = 0;
       this.recipe.items.forEach(item => {
         cost += this.itemCost(item);
       });
       return cost;
+    },
+    costPerUnit() {
+      return this.totalCost / this.recipe.batchSize;
     }
   },
   beforeMount() {
-    let id = this.$route.params.id;
+    //   let id = this.$route.params.id;
 
-    let recipeRef = db
-      .collection("users")
-      .doc(this.$store.state.currentUser.uid)
-      .collection("recipes")
-      .doc(id);
-    recipeRef.get().then(snapshot => {
-      this.recipe = snapshot.data();
-    });
+    //   let recipeRef = db
+    //     .collection("users")
+    //     .doc(this.$store.state.currentUser.uid)
+    //     .collection("recipes")
+    //     .doc(id);
+    //   recipeRef.get().then(snapshot => {
+    //     this.recipe = snapshot.data();
+    //   });
 
     this.refInventory = db
       .collection("users")
       .doc(this.$store.state.currentUser.uid)
       .collection("inventory");
 
-    db.collection("users")
-      .doc(this.$store.state.currentUser.uid)
-      .collection("inventory")
-      .onSnapshot(snapshot => {
-        const inventory = [];
-        snapshot.forEach(doc => {
-          const item = doc.data();
-          item.id = doc.id;
-          inventory.push(item);
-        });
-        this.inventory = inventory;
-      });
+    //   db.collection("users")
+    //     .doc(this.$store.state.currentUser.uid)
+    //     .collection("inventory")
+    //     .onSnapshot(snapshot => {
+    //       const inventory = [];
+    //       snapshot.forEach(doc => {
+    //         const item = doc.data();
+    //         item.id = doc.id;
+    //         inventory.push(item);
+    //       });
+    //       this.inventory = inventory;
+    //     });
   }
 };
 </script>

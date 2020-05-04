@@ -1,6 +1,6 @@
 <template>
   <div class="adjust-quantity">
-    <b-button size="sm" variant="outline-primary" :id="`popover-target-${item.id}`">Edit</b-button>
+    <b-button size="sm" variant="outline-primary" :id="`popover-target-${item.id}`">Adjust</b-button>
     <b-popover
       :ref="popover"
       @show="onShow"
