@@ -3,9 +3,6 @@
     <div class="d-flex my-4">
       <h1 class="page-title mb-0">Inventory</h1>
       <div class="ml-4">
-        <b-btn size="sm" variant="primary" v-b-modal.addInventory>
-          <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
-        </b-btn>
         <b-btn size="sm" variant="primary" @click="handleAdd">
           <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
         </b-btn>
@@ -160,6 +157,7 @@ import * as firebase from "firebase/app";
 import AdjustQuantity from "@/components/Inventory/AdjustQuantity";
 import { formatMoney } from "accounting";
 import CreateEditInventoryItemModal from "@/components/Inventory/CreateEditInventoryItemModal.vue";
+import { mapActions } from "vuex";
 // import User from "@/components/User";
 // import Multiselect from "vue-multiselect";
 // import Qty from "js-quantities";
@@ -206,6 +204,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(["deleteInventoryItem"]),
     // addItem() {
     //   if (this.unit === "kg") {
     //     this.value = this.value * 1000;
@@ -255,44 +254,26 @@ export default {
     //   }
     //   this.$refs["viewItemModal"].show();
     // },
-    handleDelete(item) {
-      const name = item.name;
-      this.$bvModal
-        .msgBoxConfirm(`Are you sure you want to delete ${name}?`, {
-          title: "Please Confirm",
-          size: "sm",
-          okVariant: "danger",
-          okTitle: "Delete",
-          cancelTitle: "Cancel"
-        })
-        .then(value => {
-          if (value === true) {
-            this.deleteItem(item);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-        });
-    },
-    deleteItem(item) {
-      this.$store.dispatch("inventoryItemLoadingStatus", {
-        id: item.id,
-        loading: true
-      });
-      const name = item.name;
-      db.collection("users")
-        .doc(this.$store.state.currentUser.uid)
-        .collection("inventory")
-        .doc(item.id)
-        .delete()
-        .then(() => {
-          this.$store.dispatch("inventoryItemLoadingStatus", {
-            id: item.id,
-            loading: false
-          });
-          this.$bvToast.toast(`${name} deleted`);
-        });
-    },
+
+    // deleteItem(item) {
+    //   this.$store.dispatch("inventoryItemLoadingStatus", {
+    //     id: item.id,
+    //     loading: true
+    //   });
+    //   const name = item.name;
+    //   db.collection("users")
+    //     .doc(this.$store.state.currentUser.uid)
+    //     .collection("inventory")
+    //     .doc(item.id)
+    //     .delete()
+    //     .then(() => {
+    //       this.$store.dispatch("inventoryItemLoadingStatus", {
+    //         id: item.id,
+    //         loading: false
+    //       });
+    //       this.$bvToast.toast(`${name} deleted`);
+    //     });
+    // },
     handleAdd() {
       this.currentItem = null;
       this.$bvModal.show("create-edit-inventory-item-modal");
@@ -332,6 +313,25 @@ export default {
       //     });
       //     this.$bvToast.toast(`${name} updated`);
       //   });
+    },
+    handleDelete(item) {
+      const name = item.name;
+      this.$bvModal
+        .msgBoxConfirm(`Are you sure you want to delete ${name}?`, {
+          title: "Please Confirm",
+          size: "sm",
+          okVariant: "danger",
+          okTitle: "Delete",
+          cancelTitle: "Cancel"
+        })
+        .then(value => {
+          if (value === true) {
+            this.deleteInventoryItem(item);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+        });
     },
     // unitCost(cost, costAmount) {
     //   if (costAmount > 1000)

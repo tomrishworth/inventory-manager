@@ -75,10 +75,10 @@
         </div>
       </div>
     </div>
-    <b-dropdown text="Add item">
+    <b-dropdown v-if="availableInventory" text="Add item">
       <b-dropdown-item
         @click="handleAdd(item.id)"
-        v-for="item in inventory"
+        v-for="item in availableInventory"
         :key="item.id"
       >{{ item.name }}</b-dropdown-item>
     </b-dropdown>
@@ -156,22 +156,45 @@ export default {
     //   this.editRecipe.items.push(receipeItem);
     // },
     getItemById(id) {
-      return this.inventory.find(item => {
-        if (item.id === id) {
-          return item.id === id;
-        } else {
-          return null;
-        }
-      });
+      if (this.inventory) {
+        return this.inventory.find(item => {
+          if (item.id === id) {
+            return item.id === id;
+          } else {
+            return null;
+          }
+        });
+      } else {
+        return {};
+      }
     }
   },
   computed: {
+    availableInventory() {
+      const inventory = this.$store.state.inventory;
+
+      const availableInventory = [];
+
+      // I'm sure there is a better way todo this
+      inventory.forEach(item => {
+        let match = false;
+        this.newRecipe.items.forEach(newRecipeitem => {
+          if (item.id === newRecipeitem.ref) {
+            match = true;
+          } else {
+            console.log("False");
+          }
+        });
+        if (match === false) {
+          availableInventory.push(item);
+        }
+      });
+
+      return availableInventory.sort((a, b) => a.name.localeCompare(b.name));
+    },
     inventory() {
       return this.$store.state.inventory;
     }
-    // recipes() {
-    //   return this.$store.state.recipes;
-    // }
   },
   beforeMount() {
     if (this.currentRecipe) {

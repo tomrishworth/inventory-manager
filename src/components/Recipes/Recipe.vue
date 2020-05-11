@@ -1,6 +1,8 @@
 <template>
-  <div class="container" v-if="recipe">
-    <router-link to="/recipes">Recipes</router-link>
+  <div class="container pt-5" v-if="recipe">
+    <router-link to="/recipes">
+      <font-awesome-icon class="mr-2" :icon="['far', 'arrow-left']"></font-awesome-icon>Recipes
+    </router-link>
     <div class="d-flex my-4">
       <h1 class="page-title mb-0">{{ recipe.name }}</h1>
       <div class="ml-4">
@@ -10,12 +12,19 @@
           variant="outline-secondary"
           size="sm"
         >Edit Recipe</b-btn>
-        <b-btn class="mr-2" variant="outline-secondary" size="sm">Delete Recipe</b-btn>
         <b-btn
-          @click="showMakeRecipeModal = !showMakeRecipeModal"
+          @click="handleDelete"
+          class="mr-2"
+          variant="outline-secondary"
+          size="sm"
+        >Delete Recipe</b-btn>
+        <b-btn
+          @click="showMakeRecipeModal = true"
+          class="mr-2"
           size="sm"
           variant="primary"
         >Make Recipe</b-btn>
+        <!-- <b-btn @click="scale" size="sm" variant="outline-secondary">Scale Recipe</b-btn> -->
       </div>
     </div>
     <div class="row">
@@ -35,7 +44,7 @@
             {{ data.item.unit }}
           </template>
           <template v-slot:cell(amountInInventory)="data">
-            {{ getItemById(data.item.ref).value }}
+            {{ getItemById(data.item.ref).value | rounded }}
             {{ getItemById(data.item.ref).unit }}
           </template>
           <template v-slot:cell(itemCost)="data">
@@ -81,21 +90,31 @@
 
     <create-edit-Recipe-Modal :currentRecipe="recipe"></create-edit-Recipe-Modal>
 
-    <!-- <b-modal
-      @ok="removeInventory"
+    <b-modal
+      @ok="handleRemove"
       ok-title="Confirm"
       v-model="showMakeRecipeModal"
       id="makeRecipeModal"
       title="Make Recipe"
     >
-      <p>This will remove the following quantities from your inventory</p>
-      <div>
-        <div class="d-flex mb-1" v-for="item in recipe.items" :key="item.id">
-          <div>{{ getItemById(item.ref).name }}</div>
-          <div class="ml-auto font-weight-bold">{{ item.value }} {{ item.unit }}</div>
+      <div v-if="!removingInventory">
+        <p>Batch Size: {{ recipe.batchSize }} {{ recipe.batchLabel}}</p>
+        <p>This will remove the following quantities from your inventory</p>
+        <div>
+          <div class="d-flex mb-1" v-for="item in recipe.items" :key="item.id">
+            <div>{{ getItemById(item.ref).name }}</div>
+            <div class="ml-auto font-weight-bold">{{ item.value }} {{ item.unit }}</div>
+          </div>
         </div>
       </div>
-    </b-modal>-->
+      <div class="removing text-center" v-else>
+        <div class="spinner mb-8">
+          <div class="cube1"></div>
+          <div class="cube2"></div>
+        </div>
+        <div class="removing-text font-weight-bold">Removing Inventory</div>
+      </div>
+    </b-modal>
 
     <!-- <b-modal
       size="lg"
@@ -152,6 +171,7 @@
 <script>
 import { db } from "@/db";
 import createEditRecipeModal from "@/components/Recipes/CreateEditRecipeModal.vue";
+import { mapActions } from "vuex";
 
 export default {
   name: "recipe",
@@ -165,6 +185,7 @@ export default {
       showMakeRecipeModal: false,
       showEditRecipeModal: false,
       currentRecipe: null,
+      removingInventory: false,
       // currentRecipe: {
       //   name: null,
       //   size: null,
@@ -193,6 +214,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(["deleteRecipe", "logCreation"]),
     getItemById(id) {
       return this.inventory.find(item => {
         if (item.id === id) {
@@ -207,7 +229,21 @@ export default {
       let itemCost = newItem.cost / newItem.costAmount;
       return itemCost * item.value;
     },
+    handleRemove(bvModalEvt) {
+      bvModalEvt.preventDefault();
+      this.removingInventory = true;
+      setTimeout(() => {
+        this.removeInventory();
+        this.handleLog();
+        this.finishRemoving();
+      }, 2000);
+    },
+    handleLog() {
+      console.log("Log");
+      this.logCreation(this.recipe);
+    },
     removeInventory() {
+      console.log("Removing...");
       this.recipe.items.forEach(item => {
         const oldValue = this.inventory.find(test => {
           return test.id === item.ref;
@@ -219,6 +255,12 @@ export default {
           value: newValue
         });
       });
+    },
+    finishRemoving() {
+      console.log("Finsih");
+      this.removingInventory = false;
+      this.showMakeRecipeModal = false;
+      this.$bvToast.toast("Inventory quantities updated");
     },
     enoughInventory(recipeQuantity, inventoryQuantity) {
       if (recipeQuantity <= inventoryQuantity) {
@@ -242,7 +284,7 @@ export default {
       this.$bvModal.show("create-edit-recipe-modal");
     },
     // Needs refactoring
-    handleDelete(id) {
+    handleDelete() {
       this.$bvModal
         .msgBoxConfirm("Are you sure you want to delete this recipe?", {
           title: "Please Confirm",
@@ -255,12 +297,7 @@ export default {
         })
         .then(value => {
           if (value === true) {
-            this.refRecipe
-              .doc(id)
-              .delete()
-              .then(function() {
-                console.log("Document successfully deleted!");
-              });
+            this.deleteRecipe(this.recipe.id);
           }
         })
         .catch(err => {

@@ -3,6 +3,11 @@ import Vuex from 'vuex';
 import { signInWithGoogle } from '@/db';
 import { db } from '@/db';
 import * as firebase from 'firebase/app';
+// import router from '.../router.js'
+// import router from 'vue-router';
+// import toaster from 'main.js';
+import router from './router';
+import { vm } from './main';
 
 Vue.use(Vuex);
 
@@ -98,11 +103,31 @@ export default new Vuex.Store({
           costAmount: payload.costAmount,
           costUnit: payload.costUnit,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        })
+        .then(() => {
+          vm.$bvToast.toast(`${payload.name} created`);
         });
       // Need to update store
     },
-    editInventoryItem({ commit, getter }, payload) {
-      console.log(payload);
+    editInventoryItem({ commit, getters }, payload) {
+      db.collection('users')
+        .doc(getters.getCurrentUserId.uid)
+        .collection('inventory')
+        .doc(payload.id)
+        .set(payload)
+        .then(() => {
+          vm.$bvToast.toast(`${payload.name} updated`);
+        });
+    },
+    deleteInventoryItem({ commit, getters }, payload) {
+      db.collection('users')
+        .doc(getters.getCurrentUserId.uid)
+        .collection('inventory')
+        .doc(payload.id)
+        .delete()
+        .then(() => {
+          vm.$bvToast.toast(`${payload.name} deleted`);
+        });
     },
     createRecipe({ commit, getters }, payload) {
       console.log('Create receipe action fired');
@@ -125,7 +150,12 @@ export default new Vuex.Store({
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       };
 
-      refRecipe.doc(newRecipeRef.id).set(recipe);
+      refRecipe
+        .doc(newRecipeRef.id)
+        .set(recipe)
+        .then(() => {
+          vm.$bvToast.toast(`${recipe.name} created`);
+        });
 
       // Need to update store
     },
@@ -137,10 +167,21 @@ export default new Vuex.Store({
         .doc(payload.id)
         .set(payload)
         .then(() => {
-          // this.$bvToast.toast(`${payload.name} updated`);
+          vm.$bvToast.toast(`${payload.name} updated`);
         });
 
       // Need to update store
+    },
+    deleteRecipe({ commit, getters }, payload) {
+      db.collection('users')
+        .doc(getters.getCurrentUserId.uid)
+        .collection('recipes')
+        .doc(payload)
+        .delete()
+        .then(() => {
+          router.push('/recipes');
+          vm.$bvToast.toast('Recipe deleted');
+        });
     },
     getRecipes({ commit }, user) {
       db.collection('users')
@@ -154,6 +195,16 @@ export default new Vuex.Store({
             recipes.push(item);
           });
           commit('setRecipes', recipes);
+        });
+    },
+    logCreation({ getters }, payload) {
+      db.collection('users')
+        .doc(getters.getCurrentUserId.uid)
+        .collection('recipes')
+        .doc(payload.id)
+        .collection('history')
+        .add({
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         });
     },
   },

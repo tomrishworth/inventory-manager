@@ -3,7 +3,7 @@
     id="create-edit-inventory-item-modal"
     :title="editing ? 'Edit Inventory Item' : 'Add Inventory Item'"
     @ok="handleOk"
-    ok-title="Add"
+    :ok-title="editing ? 'Save changes' : 'Add Item'"
     @shown="onShow"
     @close="onClose"
     size="lg"
@@ -27,7 +27,7 @@
         </b-form-group>
       </div>
       <hr />
-      <h3 class="text-md">Costing Info</h3>
+      <h3 class="text-md mb-1">Costing Info</h3>
       <p class="text-muted">e.g. $20 per 3kgs</p>
       <div class="d-flex align-items-center">
         <b-form-group label="Cost" label-for="cost" style="width:140px">
@@ -35,7 +35,7 @@
             <b-form-input
               type="number"
               step="0.01"
-              placeholder="e.g. 20"
+              placeholder="0.00"
               v-model.number="cost"
               id="cost"
             ></b-form-input>
@@ -46,7 +46,7 @@
           <b-form-input
             type="number"
             step="0.01"
-            placeholder="3"
+            placeholder="0"
             v-model.number="costAmount"
             id="costAmount"
           ></b-form-input>
@@ -95,6 +95,7 @@ export default {
       }
 
       const inventoryItem = {
+        id: this.id,
         name: this.name,
         value: this.value,
         unit: this.unit,
@@ -105,7 +106,10 @@ export default {
       };
 
       if (this.currentItem) {
-        this.editInventoryItem(inventoryItem);
+        this.editInventoryItem(inventoryItem).then(() => {
+          console.log("Edited");
+          // this.$bvToast.toast(`${this.name} updated`);
+        });
       } else {
         this.createInventoryItem(inventoryItem);
       }
@@ -126,6 +130,30 @@ export default {
         this.costAmount = this.currentItem.costAmount;
         this.costUnit = this.currentItem.costUnit;
         this.updated = firebase.firestore.FieldValue.serverTimestamp();
+
+        // Convert values to best value
+        // if (this.unit === "kg") {
+        //   this.value = this.value * 1000;
+        //   this.unit = "g";
+        // } else if (this.unit === "litres") {
+        //   this.value = this.value * 1000;
+        //   this.unit = "ml";
+        // }
+        // if (this.costUnit === "kg") {
+        //   this.costAmount = this.costAmount * 1000;
+        //   this.costUnit = "g";
+        // } else if (this.costUnit === "litres") {
+        //   this.costAmount = this.costAmount * 1000;
+        //   this.costUnit = "ml";
+        // }
+
+        if (this.unit === "g" && this.value > 9999) {
+          this.unit = "kg";
+          this.value = this.value / 1000;
+        } else if (this.unit === "ml" && this.value > 9999) {
+          this.unit = "litres";
+          this.value = this.value / 1000;
+        }
       }
       this.$refs.name.$el.focus();
     },
@@ -137,11 +165,10 @@ export default {
       (this.id = null),
         (this.name = null),
         (this.value = null),
-        (this.unit = null),
+        (this.unit = "kg"),
         (this.cost = null),
         (this.costAmount = null),
-        (this.costUnit = null),
-        (this.costUnit = null);
+        (this.costUnit = "kg");
     }
   },
   computed: {
