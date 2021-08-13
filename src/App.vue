@@ -1,12 +1,17 @@
 <template>
   <div id="app" :class="{'has-sidebar': currentUser }">
-    <div v-if="currentUser">
-      <app-sidebar></app-sidebar>
-      <router-view />
+    <div v-if="loading" class="loading-spinner">
+      <b-spinner label="Loading..."></b-spinner>
     </div>
-    <div class="d-flex flex-column align-center my-8" v-else>
-      <img class="logo mb-6" src="./assets/images/logo.svg" />
-      <sign-in class="mx-auto" style="width:300px;"></sign-in>
+    <div v-else>
+      <div v-if="currentUser">
+        <app-sidebar></app-sidebar>
+        <router-view />
+      </div>
+      <div class="d-flex flex-column align-center my-8" v-else>
+        <img class="logo mb-6" src="./assets/images/logo.svg" />
+        <sign-in class="mx-auto" style="width:300px;"></sign-in>
+      </div>
     </div>
   </div>
 </template>
@@ -18,6 +23,11 @@ import { auth } from "@/db.js";
 import { db } from "@/db";
 
 export default {
+  data() {
+    return {
+      loading: false
+    };
+  },
   components: {
     AppSidebar,
     SignIn
@@ -28,6 +38,7 @@ export default {
     }
   },
   created() {
+    this.loading = true;
     auth.onAuthStateChanged(user => {
       // this.refRecipe = db
       //   .collection("users")
@@ -43,8 +54,10 @@ export default {
         this.$store.dispatch("setCurrentUser", user);
         this.$store.dispatch("getInventory", user);
         this.$store.dispatch("getRecipes", user);
+        this.loading = false;
       } else {
         this.$store.dispatch("setCurrentUser", null);
+        this.loading = false;
       }
     });
   }
@@ -53,4 +66,11 @@ export default {
 
 <style lang="scss">
 @import "./assets/scss/style.scss";
+
+.loading-spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 </style>

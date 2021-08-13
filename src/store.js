@@ -147,6 +147,7 @@ export default new Vuex.Store({
         batchSize: payload.batchSize,
         batchLabel: payload.batchLabel,
         items: payload.items,
+        otherCosts: payload.otherCosts,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       };
 

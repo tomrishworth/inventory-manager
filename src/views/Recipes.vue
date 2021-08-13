@@ -2,40 +2,47 @@
   <div class="container">
     <div class="d-flex my-4">
       <h1 class="page-title mb-0">Recipes</h1>
-      <div class="ml-4">
+      <div v-if="recipes.length" class="ml-4">
         <b-btn size="sm" variant="primary" v-b-modal.create-edit-recipe-modal>
           <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add recipe
         </b-btn>
       </div>
     </div>
-    <div v-if="recipes" class="mb-4 row">
+    <!-- <div v-if="recipes.length" class="mb-4 row">
       <div class="recipe col-sm-3" v-for="recipe in recipes" :key="recipe.id">
         <div class="border bg-white">
-          <!-- <div v-if="recipe.imageUrl">
-            <img class="img-fluid" :src="recipe.imageUrl" />
-          </div>-->
+
           <div class="d-flex p-4">
             <router-link :to="{ name: 'recipe', params: { id: recipe.id } }">{{ recipe.name }}</router-link>
-            <!-- <b-dropdown
-              variant="link"
-              right
-              class="ml-auto dropdown-ellipsis"
-              no-caret
-              aria-label="actions"
-            >
-              <template slot="button-content">
-                <font-awesome-icon :icon="['far', 'ellipsis-v']"></font-awesome-icon>
-              </template>
-              <b-dropdown-item @click="startEditingRecipe(recipe)">
-                <font-awesome-icon :icon="['far', 'pen']"></font-awesome-icon>Edit
-              </b-dropdown-item>
-              <b-dropdown-item @click="handleDelete(recipe.id)">
-                <font-awesome-icon :icon="['far', 'trash-alt']"></font-awesome-icon>Delete
-              </b-dropdown-item>
-            </b-dropdown>-->
+
           </div>
         </div>
       </div>
+    </div> -->
+
+     <b-table
+        v-if="recipes.length"
+        class="inventory bg-white"
+        :items="recipes"
+        :fields="fields"
+      >
+        <template v-slot:cell(name)="data">
+           <router-link :to="{ name: 'recipe', params: { id: data.item.id } }">{{ data.item.name }}</router-link>
+        </template>
+        <template v-slot:cell(batchSize)="data">
+          {{data.item.batchSize}} {{data.item.batchLabel}}
+        </template>
+        <template v-slot:cell(retailPrice)="data">
+          {{data.item.retailPrice | currency }}
+        </template>
+      </b-table>
+
+    <div style="max-width: 700px" class="text-center" v-else>
+      <img width="700" src="../assets/images/clip-3.png" />
+      <p>Add your first recipe</p>
+      <b-btn size="sm" variant="primary" v-b-modal.create-edit-recipe-modal>
+        <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add recipe
+      </b-btn>
     </div>
 
     <!-- <b-modal
@@ -282,12 +289,12 @@ export default {
           sortable: true
         },
         {
-          key: "quantity",
-          label: "Quantity"
+          key: "batchSize",
+          label: "Batch Size"
         },
         {
-          key: "unit",
-          label: "Unit"
+          key: "retailPrice",
+          label: "Retail Price"
         },
         {
           key: "actions"
