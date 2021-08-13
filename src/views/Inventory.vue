@@ -2,31 +2,37 @@
   <div class="container">
     <div class="d-flex my-4">
       <h1 class="page-title mb-0">Inventory</h1>
-      <div class="ml-4">
+      <div v-if="inventory.length" class="ml-4">
         <b-btn size="sm" variant="primary" @click="handleAdd">
           <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
         </b-btn>
       </div>
     </div>
     <div class="mb-4 w-75">
-      <b-table class="inventory bg-white" :items="inventory" :fields="fields">
+      <b-table
+        v-if="inventory.length"
+        class="inventory bg-white"
+        :items="inventory"
+        :fields="fields"
+      >
+        <template v-slot:table-busy>
+          <div class="text-center my-6">
+            <b-spinner class="align-middle mr-2"></b-spinner>
+            <strong>Loading...</strong>
+          </div>
+        </template>
         <template v-slot:cell(test)="data">
           <div class="d-flex align-items-baseline">
             <div class="mr-3">
-              <!-- {{ data.item.value }} {{ data.item.unit }} -->
-              <div>{{ convertedValue(data.item.value, data.item.unit) }}</div>
+              <div>{{ convertedValue(data.item.value, data.item.unit)}}</div>
             </div>
             <adjust-quantity :item="data.item"></adjust-quantity>
           </div>
         </template>
         <template v-slot:cell(costInfo)="data">
           <div v-if="data.item.cost">
-            <!-- <div>${{ data.item.cost }} per {{ data.item.costAmount }} {{ data.item.costUnit }}</div> -->
             <div>${{ data.item.cost }} per {{ convertedValue(data.item.costAmount, data.item.costUnit) }}</div>
-            <div class="text-sm text-muted">
-              <!-- {{ unitCost(data.item.cost, data.item.costAmount) }} per {{ data.item.costUnit }} -->
-              {{ unitCost(data.item) }}
-            </div>
+            <div class="text-sm text-muted">{{ unitCost(data.item) }}</div>
           </div>
         </template>
         <template v-slot:cell(actions)="data">
@@ -43,109 +49,15 @@
           </b-dropdown>
         </template>
       </b-table>
+      <div style="max-width: 700px" class="text-center" v-else>
+        <img width="700" src="../assets/images/clip-list-is-empty.png" />
+        <p>Add your first inventory item</p>
+        <b-btn size="sm" variant="primary" @click="handleAdd">
+          <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add item
+        </b-btn>
+      </div>
     </div>
 
-    <!-- Add Inventory Item Modal -->
-    <!-- <b-modal
-      id="addInventory"
-      title="Add Inventory Item"
-      @ok="addItem"
-      ok-title="Add"
-      @shown="focusInput"
-      size="lg"
-    >
-      <b-form class>
-        <b-form-group class="w-50" label="Name" label-for="name">
-          <b-form-input ref="name" v-model="name" placeholder="e.g. Oil" id="name"></b-form-input>
-        </b-form-group>
-        <div class="d-flex">
-          <b-form-group class="mr-2" label="Amount in Inventory" label-for="amount">
-            <b-form-input
-              type="number"
-              placeholder="0"
-              step="0.01"
-              v-model.number="value"
-              id="amount"
-            ></b-form-input>
-          </b-form-group>
-          <b-form-group class label="Unit">
-            <b-form-select v-model="unit" :options="options"></b-form-select>
-          </b-form-group>
-        </div>
-        <hr />
-        <h3 class="text-md">Costing Info</h3>
-        <p class="text-muted">e.g. $20 per 3kgs</p>
-        <div class="d-flex align-items-center">
-          <b-form-group label="Cost" label-for="cost" style="width:140px">
-            <b-input-group prepend="$">
-              <b-form-input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 20"
-                v-model.number="cost"
-                id="cost"
-              ></b-form-input>
-            </b-input-group>
-          </b-form-group>
-          <div class="mx-3 font-italic text-muted pull-down-5">Per</div>
-          <b-form-group class="mr-2" label="Amount" label-for="costAmount" style="width:120px">
-            <b-form-input
-              type="number"
-              step="0.01"
-              placeholder="3"
-              v-model.number="costAmount"
-              id="costAmount"
-            ></b-form-input>
-          </b-form-group>
-          <b-form-group label="Unit" style="width:120px">
-            <b-form-select v-model="costUnit" :options="options"></b-form-select>
-          </b-form-group>
-        </div>
-      </b-form>
-    </b-modal>-->
-
-    <!-- Edit Inventory Item Modal -->
-    <!-- <b-modal ref="viewItemModal" id="viewItem" title="Edit Item" ok-title="Save" @ok="handleEdit">
-      <b-form v-if="currentItem" class>
-        <b-form-group class label="Name" label-for="name">
-          <b-form-input ref="name" v-model="currentItem.name" placeholder="e.g. Oil" id="name"></b-form-input>
-        </b-form-group>
-        <div class="d-flex">
-          <b-form-group class="mr-2" label="Amount" label-for="amount">
-            <b-form-input type="number" step="0.01" v-model.number="currentItem.value" id="amount"></b-form-input>
-          </b-form-group>
-          <b-form-group class label="Type">
-            <b-form-select v-model="currentItem.unit" :options="options"></b-form-select>
-          </b-form-group>
-        </div>
-        <h3 class="text-md">Costing Info</h3>
-        <p class="text-muted">e.g. $20 per 3kgs</p>
-        <div class="d-flex align-items-center">
-          <b-form-group prepend="$" class="mr-2" label="Cost" label-for="cost" style="width:120px">
-            <b-form-input
-              type="number"
-              step="0.01"
-              placeholder="e.g. 20"
-              v-model.number="currentItem.cost"
-              id="cost"
-            ></b-form-input>
-          </b-form-group>
-          <div class="mx-2 font-italic text-muted">Per</div>
-          <b-form-group class="mr-2" label="Amount" label-for="costAmount" style="width:120px">
-            <b-form-input
-              type="number"
-              step="0.01"
-              placeholder="3"
-              v-model.number="currentItem.costAmount"
-              id="costAmount"
-            ></b-form-input>
-          </b-form-group>
-          <b-form-group label="Unit" style="width:120px">
-            <b-form-select v-model="currentItem.costUnit" :options="options"></b-form-select>
-          </b-form-group>
-        </div>
-      </b-form>
-    </b-modal>-->
     <create-edit-inventory-item-modal :currentItem="currentItem"></create-edit-inventory-item-modal>
   </div>
 </template>
@@ -158,6 +70,8 @@ import AdjustQuantity from "@/components/Inventory/AdjustQuantity";
 import { formatMoney } from "accounting";
 import CreateEditInventoryItemModal from "@/components/Inventory/CreateEditInventoryItemModal.vue";
 import { mapActions } from "vuex";
+import _ from "lodash";
+
 // import User from "@/components/User";
 // import Multiselect from "vue-multiselect";
 // import Qty from "js-quantities";
@@ -174,6 +88,7 @@ export default {
   },
   data() {
     return {
+      loading: true,
       value: null,
       userID: null,
       user: null,
@@ -205,75 +120,6 @@ export default {
   },
   methods: {
     ...mapActions(["deleteInventoryItem"]),
-    // addItem() {
-    //   if (this.unit === "kg") {
-    //     this.value = this.value * 1000;
-    //     this.unit = "g";
-    //   } else if (this.unit === "litres") {
-    //     this.value = this.value * 1000;
-    //     this.unit = "ml";
-    //   }
-    //   if (this.costUnit === "kg") {
-    //     this.costAmount = this.costAmount * 1000;
-    //     this.costUnit = "g";
-    //   } else if (this.costUnit === "litres") {
-    //     this.costAmount = this.costAmount * 1000;
-    //     this.costUnit = "ml";
-    //   }
-    //   db.collection("users")
-    //     .doc(this.$store.state.currentUser.uid)
-    //     .collection("inventory")
-    //     .add({
-    //       name: this.name,
-    //       value: this.value,
-    //       unit: this.unit,
-    //       cost: this.cost,
-    //       costAmount: this.costAmount,
-    //       costUnit: this.costUnit,
-    //       timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    //     })
-    //     .then(() => {
-    //       this.clearForm();
-    //     });
-    // },
-    // focusInput() {
-    //   this.$refs.name.$el.focus();
-    // },
-    // clearForm() {
-    //   (this.name = null), (this.value = null), (this.unit = null);
-    // },
-    // viewInventory(item) {
-    //   this.currentItem = item;
-
-    //   if (item.value > 1000 && item.unit === "g") {
-    //     this.currentItem.value = item.value / 1000;
-    //     this.currentItem.unit = "kg";
-    //   } else if (item.value > 1000 && item.unit === "ml") {
-    //     this.currentItem.value = item.value / 1000;
-    //     this.currentItem.unit = "litres";
-    //   }
-    //   this.$refs["viewItemModal"].show();
-    // },
-
-    // deleteItem(item) {
-    //   this.$store.dispatch("inventoryItemLoadingStatus", {
-    //     id: item.id,
-    //     loading: true
-    //   });
-    //   const name = item.name;
-    //   db.collection("users")
-    //     .doc(this.$store.state.currentUser.uid)
-    //     .collection("inventory")
-    //     .doc(item.id)
-    //     .delete()
-    //     .then(() => {
-    //       this.$store.dispatch("inventoryItemLoadingStatus", {
-    //         id: item.id,
-    //         loading: false
-    //       });
-    //       this.$bvToast.toast(`${name} deleted`);
-    //     });
-    // },
     handleAdd() {
       this.currentItem = null;
       this.$bvModal.show("create-edit-inventory-item-modal");
@@ -281,38 +127,6 @@ export default {
     handleEdit(item) {
       this.currentItem = item;
       this.$bvModal.show("create-edit-inventory-item-modal");
-
-      // if (this.currentItem.unit === "kg") {
-      //   this.currentItem.value = this.currentItem.value * 1000;
-      //   this.currentItem.unit = "g";
-      // } else if (this.currentItem.unit === "litres") {
-      //   this.currentItem.value = this.currentItem.value * 1000;
-      //   this.currentItem.unit = "ml";
-      // }
-      // if (this.currentItem.costUnit === "kg") {
-      //   this.currentItem.costAmount = this.currentItem.costAmount * 1000;
-      //   this.currentItem.costUnit = "g";
-      // } else if (this.currentItem.costUnit === "litres") {
-      //   this.currentItem.costAmount = this.currentItem.costAmount * 1000;
-      //   this.currentItem.costUnit = "ml";
-      // }
-      // this.$store.dispatch("inventoryItemLoadingStatus", {
-      //   id: this.currentItem.id,
-      //   loading: true
-      // });
-      // const name = this.currentItem.name;
-      // db.collection("users")
-      //   .doc(this.$store.state.currentUser.uid)
-      //   .collection("inventory")
-      //   .doc(this.currentItem.id)
-      //   .set(this.currentItem)
-      //   .then(() => {
-      //     this.$store.dispatch("inventoryItemLoadingStatus", {
-      //       id: this.currentItem.id,
-      //       loading: false
-      //     });
-      //     this.$bvToast.toast(`${name} updated`);
-      //   });
     },
     handleDelete(item) {
       const name = item.name;
@@ -333,10 +147,6 @@ export default {
           console.error(err);
         });
     },
-    // unitCost(cost, costAmount) {
-    //   if (costAmount > 1000)
-    //   return formatMoney(cost / costAmount);
-    // },
     unitCost(item) {
       if (item.costAmount > 1000 && item.costUnit === "g") {
         let convertedValue = item.costAmount / 1000;
@@ -355,7 +165,8 @@ export default {
         const newValue = this.$units(value)
           .from("g")
           .toBest();
-        return `${newValue.val} ${newValue.unit}`;
+        const rounded = _.round(newValue.val, 2);
+        return `${rounded} ${newValue.unit}`;
       } else if (unit === "ml") {
         const newValue = this.$units(value)
           .from("ml")
@@ -386,7 +197,8 @@ export default {
               "yd3"
             ]
           });
-        return `${newValue.val} ${newValue.unit}`;
+        const rounded = _.round(newValue.val, 2);
+        return `${rounded} ${newValue.unit}`;
       } else {
         return value + " " + unit;
       }
@@ -404,33 +216,15 @@ export default {
       }
     },
     inventory() {
-      return this.$store.state.inventory;
-    },
-    indexedInventory() {
-      return this.inventory.reduce((indexedItems, item) => {
-        indexedItems[item.id] = item;
-        return indexedItems;
-      }, {});
+      return this.$store.getters.inventory;
     }
+    // indexedInventory() {
+    //   return this.inventory.reduce((indexedItems, item) => {
+    //     indexedItems[item.id] = item;
+    //     return indexedItems;
+    //   }, {});
+    // }
   }
-  // created() {
-  //   auth.onAuthStateChanged(user => {
-  //     if (user) {
-  //       db.collection("users")
-  //         .doc(user.uid)
-  //         .collection("inventory")
-  //         .onSnapshot(snapshot => {
-  //           const inventory = [];
-  //           snapshot.forEach(doc => {
-  //             const item = doc.data();
-  //             item.id = doc.id;
-  //             inventory.push(item);
-  //           });
-  //           this.inventory = inventory;
-  //         });
-  //     }
-  //   });
-  // }
 };
 </script>
 
