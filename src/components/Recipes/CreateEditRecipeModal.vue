@@ -12,12 +12,33 @@
       <b-tab title="Details">Details</b-tab>
       <b-tab title="Ingredients">Ingredients</b-tab>
     </b-tabs>-->
-    <h3 class="h4">Details</h3>
-    <div class="d-flex">
-      <b-form-group class="mr-2" label="Recipe name" label-for="name">
-        <b-form-input v-model="newRecipe.name" id="name"></b-form-input>
+    <!-- <h3 class="h4">Details</h3> -->
+    <b-form-group class="mr-2" label="Recipe name" label-for="name">
+      <b-form-input v-model="newRecipe.name" id="name"></b-form-input>
+    </b-form-group>
+    <div class="form-row">
+      <b-form-group class="col-sm-8" label="Batch Size">
+        <div class="form-row">
+          <b-form-group label="Batch Size" label-sr-only label-for="batchSize" description="e.g 50" class="col-sm-6">
+            <b-form-input
+              type="number"
+              placeholder="Size"
+              v-model.number="newRecipe.batchSize"
+              id="batchSize"
+            ></b-form-input>
+          </b-form-group>
+          <b-form-group
+            class="col-sm-6"
+            label="Batch Label"
+            label-sr-only
+            label-for="batchLabel"
+            description="e.g litres"
+          >
+            <b-form-input v-model="newRecipe.batchLabel" placeholder="Label" id="batchLabel"></b-form-input>
+          </b-form-group>
+        </div>
       </b-form-group>
-      <b-form-group label="Retail Price" prepend="$" label-for="retailPrice">
+      <b-form-group class="col-sm-4" label="Retail Price" prepend="$" label-for="retailPrice">
         <b-input-group prepend="$">
           <b-form-input
             type="number"
@@ -29,32 +50,6 @@
       </b-form-group>
     </div>
 
-    <b-form-group label="Batch Size">
-      <div class="d-flex">
-        <b-form-group
-          label="Batch Size"
-          label-sr-only
-          label-for="batchSize"
-          description="e.g 50"
-          class="mr-2"
-        >
-          <b-form-input
-            type="number"
-            placeholder="Size"
-            v-model.number="newRecipe.batchSize"
-            id="batchSize"
-          ></b-form-input>
-        </b-form-group>
-        <b-form-group
-          label="Batch Label"
-          label-sr-only
-          label-for="batchLabel"
-          description="e.g litres"
-        >
-          <b-form-input v-model="newRecipe.batchLabel" placeholder="Label" id="batchLabel"></b-form-input>
-        </b-form-group>
-      </div>
-    </b-form-group>
     <hr />
     <div class="d-flex align-items-baseline">
       <h3 class="h4 mr-2">Other Costs</h3>
@@ -91,20 +86,10 @@
       <div class="text-sm text-muted col-3">Type</div>
     </div>
     <div v-if="newRecipe.items.length">
-      <div
-        class="row align-items-baseline mb-1"
-        v-for="(item, index) in newRecipe.items"
-        :key="item.id"
-      >
+      <div class="row align-items-baseline mb-1" v-for="(item, index) in newRecipe.items" :key="item.id">
         <div class="font-weight-bold col-4">{{ getItemById(item.ref).name }}</div>
         <b-form-group class="col-3 mb-0" label="Amount" label-sr-only label-for="amount">
-          <b-form-input
-            placeholder="Amount"
-            type="number"
-            step="0.01"
-            v-model="item.value"
-            id="amount"
-          ></b-form-input>
+          <b-form-input placeholder="Amount" type="number" step="0.01" v-model="item.value" id="amount"></b-form-input>
         </b-form-group>
         <div class="col-3">{{ item.unit }}</div>
         <div class="col-2">
@@ -115,11 +100,9 @@
       </div>
     </div>
     <b-dropdown size="sm" variant="outline-primary" v-if="availableInventory" text="Add item">
-      <b-dropdown-item
-        @click="handleAdd(item.id)"
-        v-for="item in availableInventory"
-        :key="item.id"
-      >{{ item.name }}</b-dropdown-item>
+      <b-dropdown-item @click="handleAdd(item.id)" v-for="item in availableInventory" :key="item.id">{{
+        item.name
+      }}</b-dropdown-item>
     </b-dropdown>
     <div class="mt-3">
       <small class="text-muted">Only items in your inventory can be added</small>
@@ -128,9 +111,9 @@
 </template>
 
 <script>
-import * as firebase from "firebase/app";
-import { mapActions } from "vuex";
-import { uniqueId } from "lodash";
+import * as firebase from 'firebase/app';
+import { mapActions } from 'vuex';
+import { uniqueId } from 'lodash';
 
 export default {
   data() {
@@ -144,13 +127,13 @@ export default {
         batchSize: null,
         batchLabel: null,
         items: [],
-        otherCosts: []
-      }
+        otherCosts: [],
+      },
     };
   },
-  props: ["currentRecipe"],
+  props: ['currentRecipe'],
   methods: {
-    ...mapActions(["createRecipe", "editRecipe"]),
+    ...mapActions(['createRecipe', 'editRecipe']),
     handleOk() {
       const recipe = {
         id: this.newRecipe.id,
@@ -160,7 +143,7 @@ export default {
         batchLabel: this.newRecipe.batchLabel,
         items: this.newRecipe.items,
         otherCosts: this.newRecipe.otherCosts,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       };
 
       if (this.currentRecipe) {
@@ -175,7 +158,7 @@ export default {
         ref: id,
         value: 0,
         unit: unit,
-        id: uniqueId()
+        id: uniqueId(),
       };
       this.newRecipe.items.push(receipeItem);
     },
@@ -183,7 +166,7 @@ export default {
       const costItem = {
         id: uniqueId(),
         name: null,
-        costPerItem: null
+        costPerItem: null,
       };
       console.log(costItem);
       this.newRecipe.otherCosts.push(costItem);
@@ -210,7 +193,7 @@ export default {
     // },
     getItemById(id) {
       if (this.inventory) {
-        return this.inventory.find(item => {
+        return this.inventory.find((item) => {
           if (item.id === id) {
             return item.id === id;
           } else {
@@ -220,7 +203,7 @@ export default {
       } else {
         return {};
       }
-    }
+    },
   },
   computed: {
     availableInventory() {
@@ -229,13 +212,13 @@ export default {
       const availableInventory = [];
 
       // I'm sure there is a better way todo this
-      inventory.forEach(item => {
+      inventory.forEach((item) => {
         let match = false;
-        this.newRecipe.items.forEach(newRecipeitem => {
+        this.newRecipe.items.forEach((newRecipeitem) => {
           if (item.id === newRecipeitem.ref) {
             match = true;
           } else {
-            console.log("False");
+            console.log('False');
           }
         });
         if (match === false) {
@@ -247,7 +230,7 @@ export default {
     },
     inventory() {
       return this.$store.state.inventory;
-    }
+    },
   },
   beforeMount() {
     if (this.currentRecipe) {
@@ -262,6 +245,6 @@ export default {
       this.newRecipe.otherCosts = this.currentRecipe.otherCosts;
       this.newRecipe.updated = firebase.firestore.FieldValue.serverTimestamp();
     }
-  }
+  },
 };
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="container-xl pt-5" v-if="recipe">
+  <div class="container pt-5" v-if="recipe">
     <router-link to="/recipes">
       <font-awesome-icon class="mr-2" :icon="['far', 'arrow-left']"></font-awesome-icon>Recipes
     </router-link>
@@ -9,7 +9,9 @@
         <b-btn @click="showScaleRecipeModal = true" class="mr-2" size="sm" variant="outline-primary"
           >Scale Recipe</b-btn
         >
+        <!-- <b-btn @click="startScaleRecipe" class="mr-2" size="sm" variant="outline-primary">Scale</b-btn> -->
         <b-btn @click="showMakeRecipeModal = true" class="mr-2" size="sm" variant="primary">Make Recipe</b-btn>
+        <!-- <b-btn @click="scale" size="sm" variant="outline-secondary">Scale Recipe</b-btn> -->
         <div class="ml-auto">
           <b-btn @click="startEditingRecipe" class="mr-2" variant="outline-primary" size="sm">
             <font-awesome-icon :icon="['far', 'pen']"></font-awesome-icon>
@@ -26,7 +28,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-sm-8">
+      <!-- <div class="col-sm-8">
         <b-table v-if="inventory" class="bg-white" :items="recipe.items" :fields="fields" :tbody-tr-class="rowClass">
           <template v-slot:cell(ref)="data">
             <span v-if="data">{{ getItemById(data.item.ref).name }}</span>
@@ -39,14 +41,11 @@
             {{ getItemById(data.item.ref).value | rounded }}
             {{ getItemById(data.item.ref).unit }}
           </template>
-          <template v-slot:cell(percentageInInventory)="data">
-            {{ ( data.item.value / getItemById(data.item.ref).value ) * 100 | rounded}}
-          </template>
           <template v-slot:cell(itemCost)="data">
             <span>{{ itemCost(data.item) | currency }}</span>
           </template>
         </b-table>
-      </div>
+      </div> -->
       <div class="col-sm-4">
         <div class="box recipe-info p-5 mb-3">
           <div class="mb-2">
@@ -110,6 +109,14 @@
 
     <create-edit-Recipe-Modal :currentRecipe="recipe"></create-edit-Recipe-Modal>
 
+    <div>
+      <b-button @click="modalShow = !modalShow">Open Modal</b-button>
+
+      <b-modal v-model="modalShow">Hello From Modal!</b-modal>
+    </div>
+
+    <!-- <scale-recipe-modal :currentRecipe="recipe"></scale-recipe-modal> -->
+
     <b-modal
       id="scale-recipe-modal"
       size="lg"
@@ -120,15 +127,19 @@
     >
       <div class="d-flex mb-2 align-items-center">
         <p class="mb-0">Scale factor</p>
-
-        <b-btn class="mx-1" @click="scaleRecipe(0.5)">Half</b-btn>
-        <b-btn class="mx-1" @click="scaleRecipe(2)">2x</b-btn>
-        <b-btn class="mx-1" @click="scaleRecipe(3)">3x</b-btn>
-        <b-btn class="mx-1" @click="scaleRecipe(4)">4x</b-btn>
+        <!-- <b-btn
+          class="mx-1"
+          :class="[(newBatchSizeMultiplier = 0.25) ? 'btn-primary' : 'btn-secondary']"
+          @click="scaleRecipe(0.25)"
+          >Quarter</b-btn
+        > -->
+        <b-btn class="mx-1" :class="{ 'btn-primary': (newBatchSizeMultiplier = 0.5) }" @click="scaleRecipe(0.5)"
+          >Half</b-btn
+        >
+        <b-btn class="mx-1" :class="{ 'btn-primary': (newBatchSizeMultiplier = 2) }" @click="scaleRecipe(2)">2x</b-btn>
+        <b-btn class="mx-1" :class="{ 'btn-primary': (newBatchSizeMultiplier = 3) }" @click="scaleRecipe(3)">3x</b-btn>
+        <b-btn class="mx-1" :class="{ 'btn-primary': (newBatchSizeMultiplier = 4) }" @click="scaleRecipe(4)">4x</b-btn>
       </div>
-      <p v-if="newBatchSizeMultiplier">
-        Scale Factor: <strong>{{ newBatchSizeMultiplier }}</strong>
-      </p>
 
       <table v-if="newBatchSizeMultiplier" class="table">
         <thead>
@@ -140,8 +151,7 @@
           <tr v-for="item in newBatchSizeItems" :key="item.id">
             <td>{{ getItemById(item.ref).name }}</td>
             <td>{{ item.value }}{{ item.unit }}</td>
-            <!-- <td>{{ newValue(item.value) }}{{ item.unit }}</td> -->
-            <td><ICountUp :endVal="newValue(item.value)" :options="countUpOptions"/>{{ item.unit }}</td>
+            <td>{{ newValue(item.value) }}{{ item.unit }}</td>
           </tr>
         </tbody>
       </table>
@@ -179,17 +189,16 @@
 import { db } from '@/db';
 import createEditRecipeModal from '@/components/Recipes/CreateEditRecipeModal.vue';
 import { mapActions } from 'vuex';
-import ICountUp from 'vue-countup-v2';
 
 export default {
   name: 'recipe',
   props: ['id'],
   components: {
     createEditRecipeModal,
-    ICountUp,
   },
   data() {
     return {
+      modalShow: false,
       refInventory: null,
       showMakeRecipeModal: false,
       showEditRecipeModal: false,
@@ -198,33 +207,35 @@ export default {
       removingInventory: false,
       newBatchSizeMultiplier: null,
       newBatchSizeItems: {},
-      countUpOptions: {
-        duration: 1
-      },
-      // scaleReciepeFields: [
-      //   {
-      //     key: 'ref',
-      //     label: 'Item',
-      //   },
-      //   {
-      //     key: 'value',
-      //     label: 'Recipe Amount',
-      //   },
-      //   {
-      //     key: 'newValue',
-      //     label: 'New Value',
-      //   },
-      //   {
-      //     key: 'amountInInventory',
-      //     label: 'Amount In Inventory',
-      //   },
-      //   {
-      //     key: 'itemCost',
-      //     label: 'Item Cost',
-      //     tdClass: 'text-right',
-      //     thClass: 'text-right',
-      //   },
-      // ],
+      // currentRecipe: {
+      //   name: null,
+      //   size: null,
+      //   items: []
+      // },
+      scaleReciepeFields: [
+        {
+          key: 'ref',
+          label: 'Item',
+        },
+        {
+          key: 'value',
+          label: 'Recipe Amount',
+        },
+        {
+          key: 'newValue',
+          label: 'New Value',
+        },
+        {
+          key: 'amountInInventory',
+          label: 'Amount In Inventory',
+        },
+        {
+          key: 'itemCost',
+          label: 'Item Cost',
+          tdClass: 'text-right',
+          thClass: 'text-right',
+        },
+      ],
       fields: [
         {
           key: 'ref',
@@ -237,10 +248,6 @@ export default {
         {
           key: 'amountInInventory',
           label: 'Amount In Inventory',
-        },
-        {
-          key: 'percentageInInventory',
-          label: '% of Inventory',
         },
         {
           key: 'itemCost',
@@ -313,6 +320,7 @@ export default {
       }
     },
     startScaleRecipe() {
+      // this.$bvModal.show("scale-recipe-modal");
       console.log('Change batch size');
       // Make a copy of the current reciepe
       this.newBatchSizeItems = JSON.parse(JSON.stringify(this.recipe.items));
@@ -323,7 +331,7 @@ export default {
       // Loop through items in newBatchSizeItems object and change the value by the factor
       this.newBatchSizeItems.forEach((item) => {
         let value = parseInt(item.value);
-        // console.log(value * factor);
+        console.log(value * factor);
         // Update quantity
         item.newValue = value * factor;
       });
@@ -334,6 +342,10 @@ export default {
     startEditingRecipe() {
       this.startEditingRecipe = true;
       this.currentRecipe = this.recipe;
+      // this.currentRecipe.name = this.recipe.name;
+      // this.currentRecipe.size = this.recipe.size;
+      // this.currentRecipe.items = this.recipe.items;
+      // this.showEditRecipeModal = true;
       this.$bvModal.show('create-edit-recipe-modal');
     },
     // Needs refactoring
@@ -391,10 +403,42 @@ export default {
     },
   },
   beforeMount() {
+    //   let id = this.$route.params.id;
+
+    //   let recipeRef = db
+    //     .collection("users")
+    //     .doc(this.$store.state.currentUser.uid)
+    //     .collection("recipes")
+    //     .doc(id);
+    //   recipeRef.get().then(snapshot => {
+    //     this.recipe = snapshot.data();
+    //   });
+
     this.refInventory = db
       .collection('users')
       .doc(this.$store.state.currentUser.uid)
       .collection('inventory');
+
+    //   db.collection("users")
+    //     .doc(this.$store.state.currentUser.uid)
+    //     .collection("inventory")
+    //     .onSnapshot(snapshot => {
+    //       const inventory = [];
+    //       snapshot.forEach(doc => {
+    //         const item = doc.data();
+    //         item.id = doc.id;
+    //         inventory.push(item);
+    //       });
+    //       this.inventory = inventory;
+    //     });
+  },
+  mounted() {
+    console.log('Here');
+    if (this.recipe) {
+      console.log(this.recipe);
+      // this.newBatchSize = this.recipe.batchSize;
+      // Vue.set(this.newBatchSize, this.recipe.batchSize);
+    }
   },
 };
 </script>
