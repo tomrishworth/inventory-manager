@@ -33,6 +33,7 @@ import _ from 'lodash';
 import { ValidationObserver, ValidationProvider, extend, localize } from 'vee-validate';
 import en from 'vee-validate/dist/locale/en.json';
 import * as rules from 'vee-validate/dist/rules';
+import { format } from 'date-fns';
 
 // Install VeeValidate rules and localization
 Object.keys(rules).forEach((rule) => {
@@ -64,6 +65,10 @@ Vue.filter('currency', function(value) {
 
 Vue.filter('rounded', function(value) {
   return _.round(value, 2);
+});
+
+Vue.filter('date', function(value) {
+  return format(new Date(value), 'dd MMM yyyy, h:mm bbb');
 });
 
 Vue.config.productionTip = false;

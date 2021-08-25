@@ -18,6 +18,7 @@
     "core-js": "^3.16.",
     "countup": "^1.8.2",
     "countup.js": "^2.0.8",
+    "date-fns": "^2.23.0",
     "firebase": "^7.8.0",
     "js-quantities": "^1.7.4",
     "lodash": "^4.17.21",

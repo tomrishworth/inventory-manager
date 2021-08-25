@@ -61,6 +61,7 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import { mapActions } from 'vuex';
 import * as firebase from 'firebase/app';
 
@@ -68,6 +69,7 @@ export default {
   props: ['currentItem'],
   data() {
     return {
+      item: null,
       editing: false,
       name: null,
       value: null,
@@ -125,7 +127,7 @@ export default {
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       };
 
-      if (this.currentItem) {
+      if (this.item) {
         this.editInventoryItem(inventoryItem).then(() => {
           console.log('Edited');
           // this.$bvToast.toast(`${this.name} updated`);
@@ -138,16 +140,17 @@ export default {
     },
     onShow() {
       this.clearForm();
-      if (this.currentItem) {
+      this.item = Vue.util.extend({}, this.currentItem);
+      if (this.item) {
         this.editing = true;
 
-        this.id = this.currentItem.id;
-        this.name = this.currentItem.name;
-        this.value = this.currentItem.value;
-        this.unit = this.currentItem.unit;
-        this.cost = this.currentItem.cost;
-        this.costAmount = this.currentItem.costAmount;
-        this.costUnit = this.currentItem.costUnit;
+        this.id = this.item.id;
+        this.name = this.item.name;
+        this.value = this.item.value;
+        this.unit = this.item.unit;
+        this.cost = this.item.cost;
+        this.costAmount = this.item.costAmount;
+        this.costUnit = this.item.costUnit;
         this.updated = firebase.firestore.FieldValue.serverTimestamp();
 
         // Convert values to best value
@@ -178,7 +181,7 @@ export default {
     },
     onClose() {
       this.clearForm();
-      this.currentItem = null;
+      this.item = null;
     },
     clearForm() {
       (this.id = null),

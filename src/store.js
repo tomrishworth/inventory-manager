@@ -8,6 +8,7 @@ import * as firebase from 'firebase/app';
 // import toaster from 'main.js';
 import router from './router';
 import { vm } from './main';
+import { uniqueId } from 'lodash';
 
 Vue.use(Vuex);
 
@@ -149,6 +150,7 @@ export default new Vuex.Store({
         items: payload.items,
         otherCosts: payload.otherCosts,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        history: [],
       };
 
       refRecipe
@@ -199,14 +201,22 @@ export default new Vuex.Store({
         });
     },
     logCreation({ getters }, payload) {
-      db.collection('users')
+      var recipeRef = db
+        .collection('users')
         .doc(getters.getCurrentUserId.uid)
         .collection('recipes')
-        .doc(payload.id)
-        .collection('history')
-        .add({
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+        .doc(payload.id);
+
+      let historyObject = {
+        // timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: firebase.firestore.Timestamp.now(),
+        batchSize: payload.batchSize,
+        batchLabel: payload.batchLabel,
+        id: uniqueId(),
+      };
+      recipeRef.update({
+        history: firebase.firestore.FieldValue.arrayUnion(historyObject),
+      });
     },
   },
   getters: {

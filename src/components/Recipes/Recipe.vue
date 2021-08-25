@@ -38,9 +38,12 @@
           <template v-slot:cell(amountInInventory)="data">
             {{ getItemById(data.item.ref).value | rounded }}
             {{ getItemById(data.item.ref).unit }}
+            <b-badge v-if="!enoughInventory(data.item.value, getItemById(data.item.ref).value)" variant="danger"
+              >Not enough Inventory</b-badge
+            >
           </template>
           <template v-slot:cell(percentageInInventory)="data">
-            {{ ( data.item.value / getItemById(data.item.ref).value ) * 100 | rounded}}
+            {{ ((data.item.value / getItemById(data.item.ref).value) * 100) | rounded }}
           </template>
           <template v-slot:cell(itemCost)="data">
             <span>{{ itemCost(data.item) | currency }}</span>
@@ -105,6 +108,15 @@
             </div>
           </div>
         </div>
+        <div class="box p-5 mb-3">
+          <h3 class="h5">Previously Made Batches</h3>
+          <b-list-group>
+            <b-list-group-item class="d-flex align-items-baseline" v-for="item in orderedHistory" :key="item.id">
+              <div>{{ item.timestamp.toDate() | date }}</div>
+              <div class="ml-auto text-sm text-muted">{{ item.batchSize }} {{ item.batchLabel }}</div>
+            </b-list-group-item>
+          </b-list-group>
+        </div>
       </div>
     </div>
 
@@ -112,39 +124,77 @@
 
     <b-modal
       id="scale-recipe-modal"
-      size="lg"
+      size="xl"
       v-model="showScaleRecipeModal"
       @shown="startScaleRecipe"
+      @ok="showScaleRecipeModal = true"
+      @close="clearScaleRecipe"
+      @cancel="clearScaleRecipe"
       title="Scale Recipe"
+      ok-title="Make Scaled Recipe"
+      :ok-disabled="!newBatchSizeMultiplier"
       lazy
     >
-      <div class="d-flex mb-2 align-items-center">
-        <p class="mb-0">Scale factor</p>
-
-        <b-btn class="mx-1" @click="scaleRecipe(0.5)">Half</b-btn>
-        <b-btn class="mx-1" @click="scaleRecipe(2)">2x</b-btn>
-        <b-btn class="mx-1" @click="scaleRecipe(3)">3x</b-btn>
-        <b-btn class="mx-1" @click="scaleRecipe(4)">4x</b-btn>
+      <div class="d-flex mb-3 align-items-end">
+        <b-button-group class="mr-3">
+          <b-button @click="scaleRecipe(option.value)" v-for="(option, index) in scaleOptions" :key="index">{{
+            option.text
+          }}</b-button>
+        </b-button-group>
+        <b-button id="customScalePopover" @click="customScalePopoverShow = !customScalePopoverShow">
+          Custom Scale <span v-if="customScaleValue">: {{ customScaleValue }}</span>
+        </b-button>
+        <b-popover
+          :show="customScalePopoverShow"
+          @shown="customScalePopoverShown"
+          target="customScalePopover"
+          placement="bottom"
+        >
+          <b-form @submit="onCustomScaleSubmit">
+            <b-input-group>
+              <b-form-input ref="input1" placeholder="e.g. 7" v-model="customScaleValue" number></b-form-input>
+              <b-input-group-prepend>
+                <b-button type="submit" variant="primary">Submit</b-button>
+              </b-input-group-prepend>
+            </b-input-group>
+          </b-form>
+        </b-popover>
+        <b-button :disabled="!newBatchSizeMultiplier" class="ml-auto" @click="clearCustomScale" variant="secondary"
+          >Reset</b-button
+        >
       </div>
-      <p v-if="newBatchSizeMultiplier">
-        Scale Factor: <strong>{{ newBatchSizeMultiplier }}</strong>
-      </p>
 
-      <table v-if="newBatchSizeMultiplier" class="table">
+      <table class="table" v-if="newBatchSizeMultiplier">
         <thead>
           <th>Ingredient</th>
           <th>Current Batch Size: {{ recipe.batchSize }}</th>
-          <th>New Batch Size: {{ recipe.batchSize * newBatchSizeMultiplier }}</th>
+          <th style="min-width:100px">
+            <div v-if="newBatchSizeMultiplier === null">-</div>
+            <div v-else>
+              New Batch Size: <ICountUp :endVal="recipe.batchSize * newBatchSizeMultiplier" :options="countUpOptions" />
+            </div>
+          </th>
+          <th>Amount in Inventory</th>
         </thead>
         <tbody>
-          <tr v-for="item in newBatchSizeItems" :key="item.id">
+          <tr v-for="item in newBatchSizeItems" :key="item.id" :class="scaleRowClass(item)">
             <td>{{ getItemById(item.ref).name }}</td>
             <td>{{ item.value }}{{ item.unit }}</td>
-            <!-- <td>{{ newValue(item.value) }}{{ item.unit }}</td> -->
-            <td><ICountUp :endVal="newValue(item.value)" :options="countUpOptions"/>{{ item.unit }}</td>
+            <td>
+              <div v-if="newBatchSizeMultiplier === null">-</div>
+              <div v-else>
+                <ICountUp :endVal="item.newValue" :options="countUpOptions" />{{ item.unit }}
+                <b-badge v-if="!enoughInventory(item.newValue, getItemById(item.ref).value)" variant="danger"
+                  >Not enough Inventory</b-badge
+                >
+              </div>
+            </td>
+            <td>{{ getItemById(item.ref).value | rounded }} {{ getItemById(item.ref).unit }}</td>
           </tr>
         </tbody>
       </table>
+      <div v-else>Select a scale factor</div>
+      <b-button>Test button</b-button>
     </b-modal>
 
     <b-modal
@@ -155,6 +205,9 @@
       title="Make Recipe"
     >
       <div v-if="!removingInventory">
+        <p v-if="newBatchSizeMultiplier">
+          Batch Size: {{ recipe.batchSize * newBatchSizeMultiplier }} {{ recipe.batchLabel }}
+        </p>
         <p>Batch Size: {{ recipe.batchSize }} {{ recipe.batchLabel }}</p>
         <p>This will remove the following quantities from your inventory</p>
         <div>
@@ -197,10 +250,18 @@ export default {
       currentRecipe: null,
       removingInventory: false,
       newBatchSizeMultiplier: null,
+      customScaleValue: null,
+      customScalePopoverShow: false,
       newBatchSizeItems: {},
       countUpOptions: {
-        duration: 1
+        duration: 1,
       },
+      scaleOptions: [
+        { text: 'Half', value: 0.5 },
+        { text: 'Double', value: 2 },
+        { text: '3x', value: 3 },
+        { text: '4x', value: 4 },
+      ],
       // scaleReciepeFields: [
       //   {
       //     key: 'ref',
@@ -301,7 +362,9 @@ export default {
       this.$bvToast.toast('Inventory quantities updated');
     },
     enoughInventory(recipeQuantity, inventoryQuantity) {
-      if (recipeQuantity <= inventoryQuantity) {
+      let recipeQuantityInterger = parseInt(recipeQuantity);
+      let inventoryQuantityInterger = parseInt(inventoryQuantity);
+      if (recipeQuantityInterger <= inventoryQuantityInterger) {
         return true;
       } else {
         return false;
@@ -309,6 +372,11 @@ export default {
     },
     rowClass(item) {
       if (!this.enoughInventory(item.value, this.getItemById(item.ref).value)) {
+        return 'table-danger';
+      }
+    },
+    scaleRowClass(item) {
+      if (!this.enoughInventory(this.newValue(item.value), this.getItemById(item.ref).value)) {
         return 'table-danger';
       }
     },
@@ -327,6 +395,35 @@ export default {
         // Update quantity
         item.newValue = value * factor;
       });
+    },
+    clearScaleRecipe() {
+      this.newBatchSizeMultiplier = null;
+      this.newBatchSizeItems.forEach((item) => {
+        item.newValue = null;
+      });
+    },
+    onCustomScaleSubmit(value) {
+      value.preventDefault();
+      this.newBatchSizeMultiplier = this.customScaleValue;
+      this.customScalePopoverShow = false;
+    },
+    customScalePopoverShown() {
+      this.focusRef(this.$refs.input1);
+    },
+    focusRef(ref) {
+      // Some references may be a component, functional component, or plain element
+      // This handles that check before focusing, assuming a `focus()` method exists
+      // We do this in a double `$nextTick()` to ensure components have
+      // updated & popover positioned first
+      this.$nextTick(() => {
+        this.$nextTick(() => {
+          (ref.$el || ref).focus();
+        });
+      });
+    },
+    clearCustomScale() {
+      this.customScaleValue = null;
+      this.newBatchSizeMultiplier = null;
     },
     newValue(oldValue) {
       return parseInt(oldValue) * this.newBatchSizeMultiplier;
@@ -389,6 +486,20 @@ export default {
     totalCostPerUnit() {
       return this.costPerUnit + this.totalOtherCosts;
     },
+    orderedHistory() {
+      let items = this.recipe.history;
+      let orderedItems = items.sort(function(x, y) {
+        return y.timestamp.toDate() - x.timestamp.toDate();
+      });
+      return orderedItems;
+    },
+    // customScaleActive() {
+    //   if (this.scaleOptions.some((e) => e.value === this.newBatchSizeMultiplier)) {
+    //     return true;
+    //   } else {
+    //     return false;
+    //   }
+    // },
   },
   beforeMount() {
     this.refInventory = db
