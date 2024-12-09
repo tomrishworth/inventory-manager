@@ -1,20 +1,15 @@
 <template>
   <div class="container">
-    <div class="d-flex my-4">
+    <div class="d-flex my-4 w-75">
       <h1 class="page-title mb-0">Inventory</h1>
-      <div v-if="inventory.length" class="ml-4">
+      <div v-if="inventory.length" class="ml-auto">
         <b-btn size="sm" variant="primary" @click="handleAdd">
           <font-awesome-icon class="mr-2" :icon="['far', 'plus']"></font-awesome-icon>Add inventory item
         </b-btn>
       </div>
     </div>
     <div class="mb-4 w-75">
-      <b-table
-        v-if="inventory.length"
-        class="inventory bg-white"
-        :items="inventory"
-        :fields="fields"
-      >
+      <b-table v-if="inventory.length" class="inventory bg-white" :items="inventory" :fields="fields">
         <template v-slot:table-busy>
           <div class="text-center my-6">
             <b-spinner class="align-middle mr-2"></b-spinner>
@@ -24,7 +19,7 @@
         <template v-slot:cell(test)="data">
           <div class="d-flex align-items-baseline">
             <div class="mr-3">
-              <div>{{ convertedValue(data.item.value, data.item.unit)}}</div>
+              <div>{{ convertedValue(data.item.value, data.item.unit) }}</div>
             </div>
             <adjust-quantity :item="data.item"></adjust-quantity>
           </div>
@@ -63,14 +58,14 @@
 </template>
 
 <script>
-import { db } from "@/db";
-import { auth } from "@/db";
-import * as firebase from "firebase/app";
-import AdjustQuantity from "@/components/Inventory/AdjustQuantity";
-import { formatMoney } from "accounting";
-import CreateEditInventoryItemModal from "@/components/Inventory/CreateEditInventoryItemModal.vue";
-import { mapActions } from "vuex";
-import _ from "lodash";
+import { db } from '@/db';
+import { auth } from '@/db';
+import * as firebase from 'firebase/app';
+import AdjustQuantity from '@/components/Inventory/AdjustQuantity';
+import { formatMoney } from 'accounting';
+import CreateEditInventoryItemModal from '@/components/Inventory/CreateEditInventoryItemModal.vue';
+import { mapActions } from 'vuex';
+import _ from 'lodash';
 
 // import User from "@/components/User";
 // import Multiselect from "vue-multiselect";
@@ -81,10 +76,10 @@ import _ from "lodash";
 // const users = db.collection("users");
 
 export default {
-  name: "home",
+  name: 'home',
   components: {
     AdjustQuantity,
-    CreateEditInventoryItemModal
+    CreateEditInventoryItemModal,
   },
   data() {
     return {
@@ -95,114 +90,112 @@ export default {
       currentItem: null,
       users: [],
       name: null,
-      unit: "kg",
+      unit: 'kg',
       cost: null,
       costAmount: null,
-      costUnit: "kg",
+      costUnit: 'kg',
       fields: [
         {
-          key: "name",
-          sortable: true
+          key: 'name',
+          sortable: true,
         },
         {
-          key: "test",
-          label: "Quantity"
+          key: 'test',
+          label: 'Quantity',
         },
         {
-          key: "costInfo",
-          label: "Cost"
+          key: 'costInfo',
+          label: 'Cost',
         },
         {
-          key: "actions"
-        }
-      ]
+          key: 'actions',
+        },
+      ],
     };
   },
   methods: {
-    ...mapActions(["deleteInventoryItem"]),
+    ...mapActions(['deleteInventoryItem']),
     handleAdd() {
       this.currentItem = null;
-      this.$bvModal.show("create-edit-inventory-item-modal");
+      this.$bvModal.show('create-edit-inventory-item-modal');
     },
     handleEdit(item) {
       this.currentItem = item;
-      this.$bvModal.show("create-edit-inventory-item-modal");
+      this.$bvModal.show('create-edit-inventory-item-modal');
     },
     handleDelete(item) {
       const name = item.name;
       this.$bvModal
         .msgBoxConfirm(`Are you sure you want to delete ${name}?`, {
-          title: "Please Confirm",
-          size: "sm",
-          okVariant: "danger",
-          okTitle: "Delete",
-          cancelTitle: "Cancel"
+          title: 'Please Confirm',
+          size: 'sm',
+          okVariant: 'danger',
+          okTitle: 'Delete',
+          cancelTitle: 'Cancel',
         })
-        .then(value => {
+        .then((value) => {
           if (value === true) {
             this.deleteInventoryItem(item);
           }
         })
-        .catch(err => {
-          console.error(err);
+        .catch((err) => {
+          // console.error(err);
         });
     },
     unitCost(item) {
-      if (item.costAmount > 1000 && item.costUnit === "g") {
+      if (item.costAmount > 1000 && item.costUnit === 'g') {
         let convertedValue = item.costAmount / 1000;
-        return formatMoney(item.cost / convertedValue) + " per kg";
-      } else if (item.costAmount > 1000 && item.costUnit === "ml") {
+        return formatMoney(item.cost / convertedValue) + ' per kg';
+      } else if (item.costAmount > 1000 && item.costUnit === 'ml') {
         let convertedValue = item.costAmount / 1000;
-        return formatMoney(item.cost / convertedValue) + " per litre";
+        return formatMoney(item.cost / convertedValue) + ' per litre';
       } else {
-        return (
-          formatMoney(item.cost / item.costAmount) + " per " + item.costUnit
-        );
+        return formatMoney(item.cost / item.costAmount) + ' per ' + item.costUnit;
       }
     },
     convertedValue(value, unit) {
-      if (unit === "g") {
+      if (unit === 'g') {
         const newValue = this.$units(value)
-          .from("g")
+          .from('g')
           .toBest();
         const rounded = _.round(newValue.val, 2);
         return `${rounded} ${newValue.unit}`;
-      } else if (unit === "ml") {
+      } else if (unit === 'ml') {
         const newValue = this.$units(value)
-          .from("ml")
+          .from('ml')
           .toBest({
             exclude: [
-              "mm3",
-              "cm3",
-              "cl",
-              "dl",
-              "kl",
-              "m3",
-              "km3",
-              "krm",
-              "tsk",
-              "msk",
-              "kkp",
-              "glas",
-              "kanna",
-              "tsp",
-              "Tbs",
-              "in3",
-              "fl-oz",
-              "cup",
-              "pnt",
-              "qt",
-              "gal",
-              "ft3",
-              "yd3"
-            ]
+              'mm3',
+              'cm3',
+              'cl',
+              'dl',
+              'kl',
+              'm3',
+              'km3',
+              'krm',
+              'tsk',
+              'msk',
+              'kkp',
+              'glas',
+              'kanna',
+              'tsp',
+              'Tbs',
+              'in3',
+              'fl-oz',
+              'cup',
+              'pnt',
+              'qt',
+              'gal',
+              'ft3',
+              'yd3',
+            ],
           });
         const rounded = _.round(newValue.val, 2);
         return `${rounded} ${newValue.unit}`;
       } else {
-        return value + " " + unit;
+        return value + ' ' + unit;
       }
-    }
+    },
   },
   computed: {
     options() {
@@ -217,17 +210,16 @@ export default {
     },
     inventory() {
       return this.$store.getters.inventory;
-    }
+    },
     // indexedInventory() {
     //   return this.inventory.reduce((indexedItems, item) => {
     //     indexedItems[item.id] = item;
     //     return indexedItems;
     //   }, {});
     // }
-  }
+  },
 };
 </script>
-
 
 <style lang="scss">
 .adjust-quantity {

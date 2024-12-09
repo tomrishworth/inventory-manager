@@ -23,7 +23,7 @@ library.add(farEllipsisV, farPlus, farPen, farTrashAlt, farArrowLeft);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 // import { firestorePlugin } from 'vuefire';
-import BootstrapVue from 'bootstrap-vue';
+import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue';
 import { formatMoney } from 'accounting';
 import VueUnits from 'vue-units';
 import vSelect from 'vue-select';
@@ -58,6 +58,8 @@ Vue.use(BootstrapVue, {
     toastClass: 'snack',
   },
 });
+
+Vue.use(BootstrapVueIcons);
 
 Vue.filter('currency', function(value) {
   return formatMoney(value);

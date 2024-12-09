@@ -92,7 +92,6 @@ export default {
         if (!success) {
           return;
         }
-        console.log('valid');
         this.handleSubmit();
         this.clearForm();
         this.$nextTick(() => {
@@ -129,7 +128,6 @@ export default {
 
       if (this.item) {
         this.editInventoryItem(inventoryItem).then(() => {
-          console.log('Edited');
           // this.$bvToast.toast(`${this.name} updated`);
         });
       } else {

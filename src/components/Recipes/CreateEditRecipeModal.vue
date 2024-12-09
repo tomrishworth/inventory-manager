@@ -11,7 +11,8 @@
     <!-- <b-tabs pills>
       <b-tab title="Details">Details</b-tab>
       <b-tab title="Ingredients">Ingredients</b-tab>
-    </b-tabs>-->
+      <b-tab title="Other Costs">Other Costs</b-tab>
+    </b-tabs> -->
     <!-- <h3 class="h4">Details</h3> -->
     <b-form-group class="mr-2" label="Recipe name" label-for="name">
       <b-form-input v-model="newRecipe.name" id="name"></b-form-input>
@@ -168,7 +169,6 @@ export default {
         name: null,
         costPerItem: null,
       };
-      console.log(costItem);
       this.newRecipe.otherCosts.push(costItem);
     },
     removeCost(index) {
@@ -181,7 +181,6 @@ export default {
     //   this.editRecipe.items.splice(index, 1);
     // },
     // handleEditAdd(value) {
-    //   console.log(value);
     //   const unit = this.getItemById(value.id).unit;
     //   const receipeItem = {
     //     ref: value.id,
@@ -217,8 +216,6 @@ export default {
         this.newRecipe.items.forEach((newRecipeitem) => {
           if (item.id === newRecipeitem.ref) {
             match = true;
-          } else {
-            console.log('False');
           }
         });
         if (match === false) {

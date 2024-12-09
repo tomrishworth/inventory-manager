@@ -284,11 +284,9 @@ export default {
       }, 2000);
     },
     handleLog() {
-      console.log('Log');
       this.logCreation(this.recipe);
     },
     removeInventory() {
-      console.log('Removing...');
       this.recipe.items.forEach((item) => {
         const oldValue = this.inventory.find((test) => {
           return test.id === item.ref;
@@ -302,7 +300,6 @@ export default {
       });
     },
     finishRemoving() {
-      console.log('Finsih');
       this.removingInventory = false;
       this.showMakeRecipeModal = false;
       this.$bvToast.toast('Inventory quantities updated');
@@ -321,17 +318,14 @@ export default {
     },
     startScaleRecipe() {
       // this.$bvModal.show("scale-recipe-modal");
-      console.log('Change batch size');
       // Make a copy of the current reciepe
       this.newBatchSizeItems = JSON.parse(JSON.stringify(this.recipe.items));
     },
     scaleRecipe(factor) {
-      console.log(factor);
       this.newBatchSizeMultiplier = factor;
       // Loop through items in newBatchSizeItems object and change the value by the factor
       this.newBatchSizeItems.forEach((item) => {
         let value = parseInt(item.value);
-        console.log(value * factor);
         // Update quantity
         item.newValue = value * factor;
       });
@@ -366,7 +360,7 @@ export default {
           }
         })
         .catch((err) => {
-          console.error(err);
+          // console.error(err);
         });
     },
   },
@@ -433,9 +427,7 @@ export default {
     //     });
   },
   mounted() {
-    console.log('Here');
     if (this.recipe) {
-      console.log(this.recipe);
       // this.newBatchSize = this.recipe.batchSize;
       // Vue.set(this.newBatchSize, this.recipe.batchSize);
     }

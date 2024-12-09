@@ -131,16 +131,12 @@ export default new Vuex.Store({
         });
     },
     createRecipe({ commit, getters }, payload) {
-      console.log('Create receipe action fired');
-
       const refRecipe = db
         .collection('users')
         .doc(getters.getCurrentUserId.uid)
         .collection('recipes');
 
       const newRecipeRef = refRecipe.doc();
-
-      console.log(newRecipeRef);
 
       const recipe = {
         name: payload.name,
@@ -163,7 +159,6 @@ export default new Vuex.Store({
       // Need to update store
     },
     editRecipe({ commit, getters }, payload) {
-      console.log(payload);
       db.collection('users')
         .doc(getters.getCurrentUserId.uid)
         .collection('recipes')

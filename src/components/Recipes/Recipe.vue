@@ -5,11 +5,17 @@
     </router-link>
     <div class="d-flex my-4">
       <h1 class="page-title mb-0">{{ recipe.name }}</h1>
-      <div class="d-flex ml-4 flex-grow-1">
+      <div class="d-flex align-items-baseline ml-4 flex-grow-1">
         <b-btn @click="showScaleRecipeModal = true" class="mr-2" size="sm" variant="outline-primary"
           >Scale Recipe</b-btn
         >
-        <b-btn @click="showMakeRecipeModal = true" class="mr-2" size="sm" variant="primary">Make Recipe</b-btn>
+        <b-btn :disabled="!canMakeRecipe" @click="showMakeRecipeModal = true" class="mr-2" size="sm" variant="primary"
+          >Make Recipe</b-btn
+        >
+        <div v-if="!canMakeRecipe">
+          <b-icon class="mr-2" icon="exclamation-triangle"></b-icon
+          ><span class="text-sm font-weight-bold">Can't make recipe</span>
+        </div>
         <div class="ml-auto">
           <b-btn @click="startEditingRecipe" class="mr-2" variant="outline-primary" size="sm">
             <font-awesome-icon :icon="['far', 'pen']"></font-awesome-icon>
@@ -108,10 +114,14 @@
             </div>
           </div>
         </div>
-        <div class="box p-5 mb-3">
-          <h3 class="h5">Previously Made Batches</h3>
+        <div v-if="recipe.history" class="box p-5 mb-3">
+          <h3 class="text-base font-weight-bold">Previously Made Batches</h3>
           <b-list-group>
-            <b-list-group-item class="d-flex align-items-baseline" v-for="item in orderedHistory" :key="item.id">
+            <b-list-group-item
+              class="d-flex align-items-baseline"
+              v-for="item in orderedHistory"
+              :key="item.timestamp.seconds"
+            >
               <div>{{ item.timestamp.toDate() | date }}</div>
               <div class="ml-auto text-sm text-muted">{{ item.batchSize }} {{ item.batchLabel }}</div>
             </b-list-group-item>
@@ -127,13 +137,11 @@
       size="xl"
       v-model="showScaleRecipeModal"
       @shown="startScaleRecipe"
-      @ok="showScaleRecipeModal = true"
       @close="clearScaleRecipe"
       @cancel="clearScaleRecipe"
       title="Scale Recipe"
-      ok-title="Make Scaled Recipe"
-      :ok-disabled="!newBatchSizeMultiplier"
       lazy
+      hide-footer
     >
       <div class="d-flex mb-3 align-items-end">
         <b-button-group class="mr-3">
@@ -194,7 +202,11 @@
         </tbody>
       </table>
       <div v-else>Select a scale factor</div>
-      <b-button>Test button</b-button>
+      <div class="text-center mt-6">
+        <b-button :disabled="!newBatchSizeMultiplier" variant="primary" @click="showMakeRecipeModal = true"
+          >Make Scaled Recipe</b-button
+        >
+      </div>
     </b-modal>
 
     <b-modal
@@ -208,9 +220,15 @@
         <p v-if="newBatchSizeMultiplier">
           Batch Size: {{ recipe.batchSize * newBatchSizeMultiplier }} {{ recipe.batchLabel }}
         </p>
-        <p>Batch Size: {{ recipe.batchSize }} {{ recipe.batchLabel }}</p>
+        <p v-else>Batch Size: {{ recipe.batchSize }} {{ recipe.batchLabel }}</p>
         <p>This will remove the following quantities from your inventory</p>
-        <div>
+        <div v-if="newBatchSizeMultiplier">
+          <div class="d-flex mb-1" v-for="item in newBatchSizeItems" :key="item.id">
+            <div>{{ getItemById(item.ref).name }}</div>
+            <div class="ml-auto font-weight-bold">{{ item.newValue }} {{ item.unit }}</div>
+          </div>
+        </div>
+        <div v-else>
           <div class="d-flex mb-1" v-for="item in recipe.items" :key="item.id">
             <div>{{ getItemById(item.ref).name }}</div>
             <div class="ml-auto font-weight-bold">{{ item.value }} {{ item.unit }}</div>
@@ -338,27 +356,40 @@ export default {
       }, 2000);
     },
     handleLog() {
-      console.log('Log');
       this.logCreation(this.recipe);
     },
     removeInventory() {
-      console.log('Removing...');
-      this.recipe.items.forEach((item) => {
-        const oldValue = this.inventory.find((test) => {
-          return test.id === item.ref;
-        });
+      if (this.newBatchSizeMultiplier) {
+        this.newBatchSizeItems.forEach((item) => {
+          const oldValue = this.inventory.find((test) => {
+            return test.id === item.ref;
+          });
 
-        let newValue = Number(oldValue.value) - Number(item.value);
+          let newValue = Number(oldValue.value) - Number(item.newValue);
 
-        this.refInventory.doc(item.ref).update({
-          value: newValue,
+          this.refInventory.doc(item.ref).update({
+            value: newValue,
+          });
         });
-      });
+      } else {
+        this.recipe.items.forEach((item) => {
+          const oldValue = this.inventory.find((test) => {
+            return test.id === item.ref;
+          });
+
+          let newValue = Number(oldValue.value) - Number(item.value);
+
+          this.refInventory.doc(item.ref).update({
+            value: newValue,
+          });
+        });
+      }
     },
     finishRemoving() {
-      console.log('Finsih');
       this.removingInventory = false;
       this.showMakeRecipeModal = false;
+      this.showMakeRecipeModal = false;
+      this.newBatchSizeMultiplier = null;
       this.$bvToast.toast('Inventory quantities updated');
     },
     enoughInventory(recipeQuantity, inventoryQuantity) {
@@ -381,17 +412,14 @@ export default {
       }
     },
     startScaleRecipe() {
-      console.log('Change batch size');
       // Make a copy of the current reciepe
       this.newBatchSizeItems = JSON.parse(JSON.stringify(this.recipe.items));
     },
     scaleRecipe(factor) {
-      console.log(factor);
       this.newBatchSizeMultiplier = factor;
       // Loop through items in newBatchSizeItems object and change the value by the factor
       this.newBatchSizeItems.forEach((item) => {
         let value = parseInt(item.value);
-        // console.log(value * factor);
         // Update quantity
         item.newValue = value * factor;
       });
@@ -405,6 +433,11 @@ export default {
     onCustomScaleSubmit(value) {
       value.preventDefault();
       this.newBatchSizeMultiplier = this.customScaleValue;
+      this.newBatchSizeItems.forEach((item) => {
+        let value = parseInt(item.value);
+        // Update quantity
+        item.newValue = value * this.newBatchSizeMultiplier;
+      });
       this.customScalePopoverShow = false;
     },
     customScalePopoverShown() {
@@ -451,7 +484,7 @@ export default {
           }
         })
         .catch((err) => {
-          console.error(err);
+          // console.error(err);
         });
     },
   },
@@ -487,11 +520,24 @@ export default {
       return this.costPerUnit + this.totalOtherCosts;
     },
     orderedHistory() {
+      if (!this.recipe.history) {
+        return;
+      }
       let items = this.recipe.history;
       let orderedItems = items.sort(function(x, y) {
         return y.timestamp.toDate() - x.timestamp.toDate();
       });
       return orderedItems;
+    },
+    canMakeRecipe() {
+      let itemsArray = [];
+      this.recipe.items.forEach((item) => {
+        let itemValue = this.enoughInventory(item.value, this.getItemById(item.ref).value);
+        itemsArray.push(itemValue);
+      });
+      let checker = (arr) => arr.every((v) => v === true);
+
+      return checker(itemsArray);
     },
     // customScaleActive() {
     //   if (this.scaleOptions.some((e) => e.value === this.newBatchSizeMultiplier)) {

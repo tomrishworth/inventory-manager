@@ -27,7 +27,12 @@
   <div class="app-sidebar d-flex flex-column h-100">
     <div class="text-center mt-4 mb-6">
       <router-link class="bg-transparent" to="/">
-        <img class="logo" src="../assets/images/logo.svg" />
+        <!-- <img width="140" class="logo mt-4" src="../assets/images/caliper-logo.svg" /> -->
+        <img
+          width="140"
+          class="logo mt-4"
+          src="https://res.cloudinary.com/earthbar/image/upload/v1635627150/earthbar-logo-500x500_jrbpio.svg"
+        />
       </router-link>
     </div>
     <b-nav vertical>
@@ -39,7 +44,6 @@
       <b-dropdown variant="link" v-if="currentUser" right>
         <template slot="button-content">
           <b-avatar :src="currentUser.photoURL" variant="light"></b-avatar>
-          <!-- <img width="50" class="img-thumbnail rounded-circle ml-2" :src="currentUser.photoURL" /> -->
           {{ currentUser.displayName }}
         </template>
         <b-dropdown-item href="#">Profile</b-dropdown-item>

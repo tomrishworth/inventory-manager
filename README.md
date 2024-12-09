@@ -41,5 +41,5 @@ firebase login
 ```
 
 ```
-firebase depoly
+firebase deploy
 ```
